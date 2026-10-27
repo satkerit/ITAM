@@ -1,0 +1,31 @@
+# ----------------------------------------------------------------------
+# Root Security & Redirect Protection
+# If web server document root points to project root instead of /public,
+# prevent access to sensitive files and redirect cleanly to public/.
+# ----------------------------------------------------------------------
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Prevent direct access to sensitive directories and configuration files
+    RewriteRule ^(\.env|\.git|\.ai|app|bootstrap|config|database|resources|routes|storage|tests|vendor)(/.*)?$ - [F,L,NC]
+    RewriteRule ^(composer\.(json|lock)|package(-lock)?\.json|phpunit\.xml|vite\.config\.js|artisan|CLAUDE\.md|AGENTS\.md)$ - [F,L,NC]
+
+    # Redirect root requests to /public if document root is set to project root
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+
+# Disable Directory Browsing
+Options -Indexes
+
+# Block sensitive file extensions
+<FilesMatch "(\.(bak|config|sql|fla|psd|ini|log|sh|inc|swp|dist|env)|~)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
