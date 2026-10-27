@@ -39,6 +39,10 @@ Thumbs.db
 /.cursor/
 /.nova
 /.zed
+/.agents
+/.claude
+/.grok
+/docs
 .phpactor.json
 _ide_helper.php
 _ide_helper_models.php
