@@ -43,6 +43,8 @@ Thumbs.db
 _ide_helper.php
 _ide_helper_models.php
 .phpstorm.meta.php
+AGENTS.md
+CLAUDE.md
 
 # Environment & Server
 Homestead.json
