@@ -15,7 +15,8 @@
             <!-- Camera Viewport -->
             <div class="relative bg-slate-950">
                 <div class="relative w-full aspect-[4/3] sm:aspect-video max-h-[70vh] overflow-hidden">
-                    <video id="qr-video" class="absolute inset-0 w-full h-full object-cover" autoplay muted playsinline></video>
+                    <!-- Container diisi video oleh html5-qrcode (elemen #qr-video dibuat library) -->
+                    <div id="qr-reader" class="absolute inset-0 w-full h-full [&>video]:w-full [&>video]:h-full [&>video]:object-cover [&>video]:absolute [&>video]:inset-0"></div>
 
                     <!-- Idle placeholder -->
                     <div x-show="!isScanning" class="absolute inset-0 flex flex-col items-center justify-center gap-4 text-center px-6">
@@ -149,7 +150,7 @@
                             throw new Error('Browser tidak mendukung akses kamera. Gunakan Chrome/Safari terbaru.');
                         }
 
-                        this.scanner = new Html5Qrcode('qr-video', {
+                        this.scanner = new Html5Qrcode('qr-reader', {
                             formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE, Html5QrcodeSupportedFormats.CODE_128, Html5QrcodeSupportedFormats.CODE_39, Html5QrcodeSupportedFormats.EAN_13],
                             verbose: false,
                         });
