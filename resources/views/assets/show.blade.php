@@ -48,6 +48,29 @@
                             {{ $asset->purchase_cost ? 'Rp ' . number_format($asset->purchase_cost, 0, ',', '.') : '-' }}
                         </span>
                     </div>
+                    <div>
+                        <span class="block text-slate-400 text-xs uppercase font-bold">Tempat / Toko Pembelian</span>
+                        <span class="text-slate-800">{{ $asset->purchase_store ?? '-' }}</span>
+                    </div>
+                    @if($asset->photo_path)
+                        <div class="col-span-2 md:col-span-3">
+                            <span class="block text-slate-400 text-xs uppercase font-bold mb-2">Foto Inventaris</span>
+                            <img src="{{ Storage::url($asset->photo_path) }}" alt="Foto {{ $asset->name }}" class="h-48 rounded-xl border border-slate-200 object-cover">
+                        </div>
+                    @endif
+                </div>
+
+                <div class="mt-5 pt-4 border-t border-slate-100 flex gap-2">
+                    <a href="{{ route('web.assets.edit', $asset) }}" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs transition">
+                        Edit Aset
+                    </a>
+                    <form action="{{ route('web.assets.destroy', $asset) }}" method="POST" onsubmit="return confirm('Hapus aset ini beserta seluruh riwayat operasionalnya? Tindakan ini tidak dapat dibatalkan.');">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="px-4 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 font-semibold text-xs transition">
+                            Hapus Aset
+                        </button>
+                    </form>
                 </div>
             </div>
 

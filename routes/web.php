@@ -37,6 +37,9 @@ Route::prefix('app')->name('web.')->middleware('auth')->group(function () {
     Route::get('/assets', [AssetWebController::class, 'index'])->name('assets.index');
     Route::get('/assets/create', [AssetWebController::class, 'create'])->name('assets.create');
     Route::post('/assets', [AssetWebController::class, 'store'])->name('assets.store');
+    Route::get('/assets/{asset}/edit', [AssetWebController::class, 'edit'])->name('assets.edit');
+    Route::put('/assets/{asset}', [AssetWebController::class, 'update'])->name('assets.update');
+    Route::delete('/assets/{asset}', [AssetWebController::class, 'destroy'])->name('assets.destroy');
     Route::get('/assets/{asset}', [AssetWebController::class, 'show'])->name('assets.show');
 
     // Operasional: Penugasan (Check-out & Check-in)

@@ -21,6 +21,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
     'serial_number',
     'purchase_date',
     'purchase_cost',
+    'purchase_store',
+    'photo_path',
     'useful_life_months',
     'specifications',
     'qr_code_path',

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Web;
 
+use App\Enums\AssetStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Asset;
 use App\Models\AssetCategory;
@@ -9,6 +10,7 @@ use App\Models\Location;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -62,30 +64,95 @@ class AssetWebController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    private function validationRules(?int $assetId = null): array
     {
-        $validated = $request->validate([
-            'asset_code' => ['required', 'string', 'max:100', 'unique:assets,asset_code'],
+        return [
+            'asset_code' => ['required', 'string', 'max:100', 'unique:assets,asset_code'.($assetId ? ','.$assetId : '')],
             'name' => ['required', 'string', 'max:255'],
             'category_id' => ['required', 'exists:asset_categories,id'],
             'location_id' => ['required', 'exists:locations,id'],
             'serial_number' => ['nullable', 'string', 'max:255'],
             'purchase_date' => ['nullable', 'date'],
             'purchase_cost' => ['nullable', 'numeric', 'min:0'],
+            'purchase_store' => ['nullable', 'string', 'max:255'],
             'useful_life_months' => ['nullable', 'integer', 'min:1'],
-            'status' => ['required', 'string'],
-            'notes' => ['nullable', 'string'],
+            'status' => ['required', 'in:'.implode(',', array_column(AssetStatus::cases(), 'value'))],
+            'notes' => ['nullable', 'string', 'max:2000'],
             'specifications' => ['nullable', 'array'],
-        ]);
+            'specifications.*' => ['nullable', 'string', 'max:500'],
+            'photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+        ];
+    }
+
+    public function store(Request $request): RedirectResponse
+    {
+        $validated = $request->validate($this->validationRules());
 
         $qrPath = 'qrcodes/'.$validated['asset_code'].'.svg';
         $svg = QrCode::format('svg')->size(300)->errorCorrection('H')->generate($validated['asset_code']);
         Storage::disk('public')->put($qrPath, $svg);
         $validated['qr_code_path'] = $qrPath;
 
+        if ($request->hasFile('photo')) {
+            $validated['photo_path'] = $request->file('photo')->store('asset-photos', 'public');
+        }
+
         $asset = Asset::create($validated);
 
         return redirect()->route('web.assets.show', $asset)->with('success', 'Aset baru berhasil didaftarkan dan QR Code telah diterbitkan!');
+    }
+
+    public function edit(Asset $asset): View
+    {
+        $locations = Location::all();
+        $categories = AssetCategory::all();
+
+        return view('assets.edit', [
+            'asset' => $asset,
+            'locations' => $locations,
+            'categories' => $categories,
+        ]);
+    }
+
+    public function update(Request $request, Asset $asset): RedirectResponse
+    {
+        $validated = $request->validate($this->validationRules($asset->id));
+
+        if ($request->hasFile('photo')) {
+            if ($asset->photo_path) {
+                Storage::disk('public')->delete($asset->photo_path);
+            }
+            $validated['photo_path'] = $request->file('photo')->store('asset-photos', 'public');
+        }
+
+        $asset->update($validated);
+
+        return redirect()->route('web.assets.show', $asset)->with('success', 'Data aset berhasil diperbarui!');
+    }
+
+    public function destroy(Asset $asset): RedirectResponse
+    {
+        if ($asset->status === AssetStatus::Deployed) {
+            return redirect()->route('web.assets.index')->with('error', 'Aset sedang dipinjamkan (Deployed). Lakukan Check-in terlebih dahulu sebelum menghapus.');
+        }
+
+        DB::transaction(function () use ($asset): void {
+            $asset->assignments()->delete();
+            $asset->mutations()->delete();
+            $asset->maintenanceLogs()->delete();
+            $asset->softwareLicenses()->delete();
+            $asset->disposal()->delete();
+            $asset->delete();
+        });
+
+        if ($asset->photo_path) {
+            Storage::disk('public')->delete($asset->photo_path);
+        }
+        if ($asset->qr_code_path) {
+            Storage::disk('public')->delete($asset->qr_code_path);
+        }
+
+        return redirect()->route('web.assets.index')->with('success', 'Aset beserta riwayat operasionalnya berhasil dihapus.');
     }
 
     public function show(Asset $asset): View

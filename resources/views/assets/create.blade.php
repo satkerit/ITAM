@@ -13,7 +13,7 @@
             }
          }">
 
-        <form action="{{ route('web.assets.store') }}" method="POST" class="space-y-6">
+        <form action="{{ route('web.assets.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
             @csrf
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -107,6 +107,21 @@
             <div>
                 <label class="block text-xs font-bold uppercase text-slate-700 mb-2">Catatan Tambahan</label>
                 <textarea name="notes" rows="3" class="w-full text-sm rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 px-3.5 py-2.5 border" placeholder="Keterangan kondisi fisik, kelengkapan aksesoris, dll.">{{ old('notes') }}</textarea>
+                @error('notes') <span class="text-xs text-rose-600 mt-1 block">{{ $message }}</span> @enderror
+            </div>
+
+            <!-- Tempat / Toko Pembelian -->
+            <div>
+                <label class="block text-xs font-bold uppercase text-slate-700 mb-2">Tempat / Toko Pembelian</label>
+                <input type="text" name="purchase_store" value="{{ old('purchase_store') }}" placeholder="Contoh: Toko Komputer Jaya / Tokopedia" class="w-full text-sm rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 px-3.5 py-2.5 border">
+                @error('purchase_store') <span class="text-xs text-rose-600 mt-1 block">{{ $message }}</span> @enderror
+            </div>
+
+            <!-- Foto Inventaris -->
+            <div>
+                <label class="block text-xs font-bold uppercase text-slate-700 mb-2">Foto Inventaris (JPG/PNG/WEBP, maks 2MB)</label>
+                <input type="file" name="photo" accept="image/jpeg,image/png,image/webp" class="w-full text-sm rounded-xl border-slate-200 px-3.5 py-2.5 border file:mr-3 file:px-3 file:py-1.5 file:rounded-lg file:border-0 file:bg-indigo-50 file:text-indigo-700 file:text-xs file:font-semibold">
+                @error('photo') <span class="text-xs text-rose-600 mt-1 block">{{ $message }}</span> @enderror
             </div>
 
             <div class="pt-4 flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-3">
