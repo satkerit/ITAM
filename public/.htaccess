@@ -55,8 +55,8 @@ Options -Indexes -MultiViews
     # Referrer policy
     Header always set Referrer-Policy "strict-origin-when-cross-origin"
 
-    # Permissions Policy
-    Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+    # Permissions Policy (camera=self agar scanner QR berfungsi; microphone & geolocation tetap diblokir)
+    Header always set Permissions-Policy "camera=(self), microphone=(), geolocation=()"
 
     # Remove X-Powered-By header if present
     Header unset X-Powered-By

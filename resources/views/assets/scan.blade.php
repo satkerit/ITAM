@@ -6,7 +6,7 @@
 @section('content')
     <div class="max-w-3xl mx-auto space-y-8">
         <!-- Scanner Component -->
-        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-6" x-data="qrScanner()">
+        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-6" x-data="qrScanner()" x-init="init()">
             <div class="flex items-center justify-between mb-4">
                 <div>
                     <h2 class="text-base font-bold text-slate-900">Kamera Pemindai QR Code</h2>
@@ -15,6 +15,10 @@
             </div>
 
             <div id="reader" class="w-full rounded-2xl overflow-hidden border border-slate-200 bg-slate-900 min-h-[300px]"></div>
+
+            <template x-if="error">
+                <div class="mt-4 p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-sm" x-text="error"></div>
+            </template>
 
             <div class="mt-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
                 <form action="{{ route('web.assets.scan') }}" method="GET" class="flex-1 flex flex-col sm:flex-row gap-2">
@@ -66,15 +70,44 @@
     <script>
         function qrScanner() {
             return {
+                error: '',
+                scanned: false,
+                scanner: null,
                 init() {
-                    const html5QrcodeScanner = new Html5QrcodeScanner(
-                        "reader",
-                        { fps: 10, qrbox: { width: 250, height: 250 } },
-                        /* verbose= */ false
-                    );
-                    html5QrcodeScanner.render((decodedText, decodedResult) => {
-                        window.location.href = "{{ route('web.assets.scan') }}?code=" + encodeURIComponent(decodedText);
+                    this.$nextTick(() => {
+                        try {
+                            this.scanner = new Html5QrcodeScanner(
+                                'reader',
+                                { fps: 10, qrbox: { width: 250, height: 250 }, rememberLastUsedCamera: true },
+                                false
+                            );
+                            this.scanner.render(
+                                (decodedText) => this.onScan(decodedText),
+                                (errorMessage) => {
+                                    // Ignored: frame-by-frame decode misses are noisy.
+                                    if (typeof errorMessage === 'string' && /permission|denied|not allowed|notfound: could not query|secure context|https/i.test(errorMessage)) {
+                                        this.showError(errorMessage);
+                                    }
+                                }
+                            );
+                        } catch (e) {
+                            this.showError(e && e.message ? e.message : 'Scanner gagal dimuat.');
+                        }
                     });
+                },
+                onScan(decodedText) {
+                    if (this.scanned) return;
+                    this.scanned = true;
+                    try { this.scanner && this.scanner.clear(); } catch (e) { /* ignore */ }
+                    window.location.href = "{{ route('web.assets.scan') }}?code=" + encodeURIComponent(decodedText);
+                },
+                showError(message) {
+                    const isHttp = window.location.protocol === 'http:' && !['localhost', '127.0.0.1'].includes(window.location.hostname);
+                    if (isHttp) {
+                        this.error = 'Kamera tidak dapat diakses: kamera wajib HTTPS. Buka aplikasi via https:// atau gunakan input manual di bawah.';
+                    } else {
+                        this.error = 'Kamera tidak dapat diakses: ' + message + ' Pastikan izin kamera diberikan, atau gunakan input manual di bawah.';
+                    }
                 }
             }
         }
