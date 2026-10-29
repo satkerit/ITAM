@@ -8,6 +8,7 @@ use App\Models\Asset;
 use App\Models\AssetCategory;
 use App\Models\Location;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -20,10 +21,27 @@ class AssetWebController extends Controller
     public function index(Request $request): View
     {
         $query = Asset::query()->with(['category', 'location']);
+        $this->applyCatalogFilters($query, $request);
 
+        $assets = $query->latest('id')->paginate(12)->withQueryString();
+        $locations = Location::all();
+        $categories = AssetCategory::all();
+
+        return view('assets.index', [
+            'assets' => $assets,
+            'locations' => $locations,
+            'categories' => $categories,
+        ]);
+    }
+
+    /**
+     * Filter katalog yang dipakai bersama oleh daftar aset dan cetak label QR.
+     */
+    private function applyCatalogFilters(Builder $query, Request $request): void
+    {
         if ($request->filled('search')) {
             $search = $request->query('search');
-            $query->where(function ($q) use ($search) {
+            $query->where(function (Builder $q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
                     ->orWhere('asset_code', 'like', "%{$search}%")
                     ->orWhere('serial_number', 'like', "%{$search}%");
@@ -41,16 +59,6 @@ class AssetWebController extends Controller
         if ($request->filled('status')) {
             $query->where('status', $request->query('status'));
         }
-
-        $assets = $query->latest('id')->paginate(12)->withQueryString();
-        $locations = Location::all();
-        $categories = AssetCategory::all();
-
-        return view('assets.index', [
-            'assets' => $assets,
-            'locations' => $locations,
-            'categories' => $categories,
-        ]);
     }
 
     public function create(): View
@@ -87,11 +95,6 @@ class AssetWebController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate($this->validationRules());
-
-        $qrPath = 'qrcodes/'.$validated['asset_code'].'.svg';
-        $svg = QrCode::format('svg')->size(300)->errorCorrection('H')->generate($validated['asset_code']);
-        Storage::disk('public')->put($qrPath, $svg);
-        $validated['qr_code_path'] = $qrPath;
 
         if ($request->hasFile('photo')) {
             $validated['photo_path'] = $request->file('photo')->store('asset-photos', 'public');
@@ -174,6 +177,41 @@ class AssetWebController extends Controller
         ]);
     }
 
+    public function printLabels(Request $request): View
+    {
+        $ids = collect((array) $request->query('ids', []))
+            ->map(fn ($id): int => (int) $id)
+            ->filter()
+            ->all();
+
+        $query = Asset::query()->with('location');
+
+        if ($ids !== []) {
+            $query->whereIn('id', $ids);
+        } else {
+            $this->applyCatalogFilters($query, $request);
+        }
+
+        $assets = $query->orderBy('asset_code')->limit(500)->get();
+
+        $size = in_array($request->query('size'), ['small', 'medium', 'large'], true)
+            ? $request->query('size')
+            : 'medium';
+
+        $qrPixels = ['small' => 120, 'medium' => 180, 'large' => 240][$size];
+
+        $qrCodes = $assets->mapWithKeys(fn (Asset $asset) => [
+            $asset->id => QrCode::format('svg')->size($qrPixels)->errorCorrection('H')->generate($asset->asset_code),
+        ]);
+
+        return view('assets.print', [
+            'assets' => $assets,
+            'qrCodes' => $qrCodes,
+            'size' => $size,
+            'filters' => $request->only(['search', 'location_id', 'category_id', 'status', 'ids']),
+        ]);
+    }
+
     public function scan(Request $request): View
     {
         $foundAsset = null;
@@ -231,10 +269,6 @@ class AssetWebController extends Controller
                 continue;
             }
 
-            $qrPath = 'qrcodes/'.$assetCode.'.svg';
-            $svg = QrCode::format('svg')->size(300)->errorCorrection('H')->generate($assetCode);
-            Storage::disk('public')->put($qrPath, $svg);
-
             $purchaseDate = trim((string) ($row['purchase_date'] ?? ''));
 
             Asset::create([
@@ -248,7 +282,6 @@ class AssetWebController extends Controller
                 'useful_life_months' => is_numeric($row['useful_life_months'] ?? null) ? (int) $row['useful_life_months'] : null,
                 'status' => trim((string) ($row['status'] ?? '')) ?: 'available',
                 'notes' => trim((string) ($row['notes'] ?? '')) ?: null,
-                'qr_code_path' => $qrPath,
             ]);
             $created++;
         }

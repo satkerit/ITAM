@@ -16,8 +16,6 @@ use App\Models\MaintenanceLog;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Storage;
-use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class DatabaseSeeder extends Seeder
 {
@@ -170,13 +168,6 @@ class DatabaseSeeder extends Seeder
         ];
 
         foreach ($assetsData as $item) {
-            $qrPath = 'qrcodes/'.$item['asset_code'].'.svg';
-            if (! Storage::disk('public')->exists($qrPath)) {
-                $svg = QrCode::format('svg')->size(300)->errorCorrection('H')->generate($item['asset_code']);
-                Storage::disk('public')->put($qrPath, $svg);
-            }
-            $item['qr_code_path'] = $qrPath;
-
             $asset = Asset::updateOrCreate(['asset_code' => $item['asset_code']], $item);
 
             // Relasi contoh

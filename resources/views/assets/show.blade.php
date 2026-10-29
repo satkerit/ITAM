@@ -212,9 +212,9 @@
                     <a href="{{ asset('storage/' . $asset->qr_code_path) }}" download="{{ $asset->asset_code }}.svg" class="flex-1 py-2 px-3 text-xs font-semibold bg-indigo-50 text-indigo-700 rounded-xl hover:bg-indigo-100 transition border border-indigo-200">
                         Download SVG
                     </a>
-                    <button onclick="window.print()" class="flex-1 py-2 px-3 text-xs font-semibold bg-slate-800 text-white rounded-xl hover:bg-slate-900 transition">
+                    <a href="{{ route('web.assets.print', ['ids' => [$asset->id]]) }}" class="flex-1 py-2 px-3 text-xs font-semibold bg-slate-800 text-white rounded-xl hover:bg-slate-900 transition text-center">
                         Cetak Label
-                    </button>
+                    </a>
                 </div>
             </div>
 

@@ -11,6 +11,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Facades\Storage;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 #[Fillable([
     'asset_code',
@@ -41,6 +43,36 @@ class Asset extends Model
             'useful_life_months' => 'integer',
             'specifications' => 'array',
         ];
+    }
+
+    /**
+     * Terbitkan QR otomatis dari kode aset setiap kali aset disimpan.
+     * QR diperbarui bila kode aset berubah, atau diterbitkan ulang bila path kosong / file hilang.
+     */
+    protected static function booted(): void
+    {
+        static::saving(function (Asset $asset): void {
+            if ($asset->exists
+                && ! $asset->isDirty('asset_code')
+                && filled($asset->qr_code_path)
+                && Storage::disk('public')->exists($asset->qr_code_path)) {
+                return;
+            }
+
+            $previousPath = $asset->getOriginal('qr_code_path');
+            $path = 'qrcodes/'.$asset->asset_code.'.svg';
+
+            Storage::disk('public')->put(
+                $path,
+                QrCode::format('svg')->size(300)->errorCorrection('H')->generate($asset->asset_code)
+            );
+
+            if ($previousPath && $previousPath !== $path) {
+                Storage::disk('public')->delete($previousPath);
+            }
+
+            $asset->qr_code_path = $path;
+        });
     }
 
     /**

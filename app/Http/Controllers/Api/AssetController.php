@@ -53,12 +53,6 @@ class AssetController extends Controller
         }
 
         $asset = Asset::create($validated);
-
-        $qrCodeSvg = QrCode::format('svg')->size(250)->generate($asset->asset_code);
-        $qrPath = "qrcodes/{$asset->asset_code}.svg";
-        Storage::disk('public')->put($qrPath, $qrCodeSvg);
-
-        $asset->update(['qr_code_path' => $qrPath]);
         $asset->load(['category', 'location']);
 
         return response()->json([

@@ -34,6 +34,7 @@ Route::prefix('app')->name('web.')->middleware('auth')->group(function () {
     Route::get('/assets/scan', [AssetWebController::class, 'scan'])->name('assets.scan');
     Route::get('/assets/import/template', [AssetWebController::class, 'downloadTemplate'])->name('assets.template');
     Route::post('/assets/import', [AssetWebController::class, 'import'])->name('assets.import');
+    Route::get('/assets/print', [AssetWebController::class, 'printLabels'])->name('assets.print');
     Route::get('/assets', [AssetWebController::class, 'index'])->name('assets.index');
     Route::get('/assets/create', [AssetWebController::class, 'create'])->name('assets.create');
     Route::post('/assets', [AssetWebController::class, 'store'])->name('assets.store');

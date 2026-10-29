@@ -4,7 +4,7 @@
 @section('header', 'Katalog Perangkat & Hardware')
 
 @section('content')
-    <div x-data="{ openImport: false }" class="space-y-6">
+    <div x-data="{ openImport: false, selected: [] }" class="space-y-6">
     <!-- Import Toolbar -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <p class="text-xs text-slate-500">Kelola katalog perangkat. Gunakan impor CSV untuk pendaftaran massal.</p>
@@ -62,14 +62,35 @@
     </div>
 
     <!-- Assets Grid Cards -->
+    <form method="GET" action="{{ route('web.assets.print') }}" class="space-y-6">
+        <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <label class="inline-flex items-center gap-2 text-xs font-semibold text-slate-600 cursor-pointer">
+                <input type="checkbox" @change="selected = $event.target.checked ? @js($assets->pluck('id')->all()) : []" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                Pilih semua di halaman ini
+            </label>
+            <div class="flex flex-wrap items-center gap-3">
+                <span class="text-xs text-slate-500"><span x-text="selected.length"></span> aset dipilih</span>
+                <a href="{{ route('web.assets.print', request()->only(['search', 'location_id', 'category_id', 'status'])) }}" class="inline-flex items-center gap-2 px-4 py-2 border border-slate-200 text-slate-700 font-semibold text-xs rounded-xl hover:bg-slate-50 transition">
+                    Cetak Semua Hasil Filter
+                </a>
+                <button type="submit" :disabled="selected.length === 0" class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-xs rounded-xl shadow-xs transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                    Cetak QR Terpilih
+                </button>
+            </div>
+        </div>
+
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         @forelse($assets as $asset)
             <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-6 flex flex-col justify-between hover:border-indigo-300 transition group">
                 <div>
                     <div class="flex items-start justify-between gap-3 mb-3">
-                        <span class="px-2.5 py-1 rounded-md bg-slate-100 text-slate-800 font-mono text-xs font-bold">
-                            {{ $asset->asset_code }}
-                        </span>
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" name="ids[]" value="{{ $asset->id }}" x-model="selected" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                            <span class="px-2.5 py-1 rounded-md bg-slate-100 text-slate-800 font-mono text-xs font-bold">
+                                {{ $asset->asset_code }}
+                            </span>
+                        </div>
                         <span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold
                             @if($asset->status->value === 'available') bg-emerald-50 text-emerald-700 border border-emerald-200
                             @elseif($asset->status->value === 'deployed') bg-indigo-50 text-indigo-700 border border-indigo-200
@@ -112,6 +133,7 @@
             </div>
         @endforelse
     </div>
+    </form>
 
     <!-- Pagination -->
     <div>
