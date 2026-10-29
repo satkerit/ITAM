@@ -14,9 +14,9 @@
 
             <!-- Camera Viewport -->
             <div class="relative bg-slate-950">
-                <div class="relative w-full aspect-[4/3] sm:aspect-video max-h-[70vh] overflow-hidden">
+                <div class="relative w-full aspect-[4/3] max-h-[70vh] overflow-hidden">
                     <!-- Container diisi video oleh html5-qrcode (elemen #qr-video dibuat library) -->
-                    <div id="qr-reader" class="absolute inset-0 w-full h-full [&>video]:w-full [&>video]:h-full [&>video]:object-cover [&>video]:absolute [&>video]:inset-0"></div>
+                    <div id="qr-reader" class="absolute inset-0 w-full h-full [&>video]:w-full [&>video]:h-full [&>video]:object-contain [&>video]:absolute [&>video]:inset-0"></div>
 
                     <!-- Idle placeholder -->
                     <div x-show="!isScanning" class="absolute inset-0 flex flex-col items-center justify-center gap-4 text-center px-6">
@@ -173,10 +173,44 @@
                     const boxSize = Math.min(window.innerWidth * 0.7, 280);
                     await this.scanner.start(
                         camera ? camera.id : { facingMode: 'environment' },
-                        { fps: 10, qrbox: { width: boxSize, height: boxSize }, aspectRatio: 4 / 3 },
+                        {
+                            fps: 10,
+                            qrbox: { width: boxSize, height: boxSize },
+                            experimentalFeatures: { useBarCodeDetectorIfSupported: true },
+                        },
                         (decodedText) => this.onScan(decodedText),
                         () => { /* per-frame decode miss — ignore */ }
                     );
+
+                    await this.tuneCamera();
+                },
+
+                /**
+                 * Minta autofokus kontinu + zoom minimum (wide) bila perangkat mendukung.
+                 * Constraint yang tidak didukung diabaikan agar kamera tetap jalan.
+                 */
+                async tuneCamera() {
+                    try {
+                        const caps = this.scanner.getRunningTrackCapabilities() || {};
+                        const advanced = [];
+
+                        const focusModes = Array.isArray(caps.focusMode) ? caps.focusMode : [];
+                        if (focusModes.includes('continuous')) {
+                            advanced.push({ focusMode: 'continuous' });
+                        } else if (focusModes.includes('single-shot')) {
+                            advanced.push({ focusMode: 'single-shot' });
+                        }
+
+                        if (caps.zoom && typeof caps.zoom === 'object' && Number.isFinite(caps.zoom.min)) {
+                            advanced.push({ zoom: caps.zoom.min });
+                        }
+
+                        if (advanced.length > 0) {
+                            await this.scanner.applyVideoConstraints({ advanced });
+                        }
+                    } catch (e) {
+                        // Capabilities API tidak didukung (mis. Safari) — abaikan.
+                    }
                 },
 
                 async stopScan() {

@@ -3,7 +3,9 @@
 namespace Tests\Feature;
 
 use App\Enums\AssetStatus;
+use App\Enums\AssignmentStatus;
 use App\Models\Asset;
+use App\Models\AssetAssignment;
 use App\Models\AssetCategory;
 use App\Models\Location;
 use App\Models\User;
@@ -108,6 +110,30 @@ class AssetQrPrintTest extends TestCase
         $asset->save();
 
         Storage::disk('public')->assertExists('qrcodes/LPT-001.svg');
+    }
+
+    public function test_asset_detail_page_shows_qr_image_with_enum_assignment_status(): void
+    {
+        Storage::fake('public');
+
+        $location = Location::create(['name' => 'Kantor Pusat', 'address' => 'Jl. Sudirman']);
+        $category = AssetCategory::create(['name' => 'Laptop', 'code' => 'LPT']);
+        $asset = $this->makeAsset('LPT-001', $location, $category);
+        $borrower = User::factory()->create();
+
+        AssetAssignment::create([
+            'asset_id' => $asset->id,
+            'user_id' => $borrower->id,
+            'assigned_date' => now()->toDateString(),
+            'status' => AssignmentStatus::Active,
+            'assigned_by' => $borrower->id,
+        ]);
+
+        $this->actingAs(User::factory()->create(['role' => 'admin']))
+            ->get(route('web.assets.show', $asset))
+            ->assertOk()
+            ->assertSee('storage/qrcodes/LPT-001.svg', false)
+            ->assertSee('Active');
     }
 
     public function test_label_size_option_is_applied(): void

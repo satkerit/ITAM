@@ -149,8 +149,8 @@
                                 <span class="text-slate-500">Mulai: {{ $assign->assigned_date->format('d M Y') }} &bull; Selesai: {{ $assign->returned_date?->format('d M Y') ?? 'Masih Aktif' }}</span>
                                 @if($assign->notes) <p class="text-slate-600 mt-1 italic">"{{ $assign->notes }}"</p> @endif
                             </div>
-                            <span class="px-2.5 py-1 rounded-md text-[11px] font-bold {{ $assign->status === 'active' ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-200 text-slate-700' }}">
-                                {{ ucfirst($assign->status) }}
+                            <span class="px-2.5 py-1 rounded-md text-[11px] font-bold {{ $assign->status->value === 'active' ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-200 text-slate-700' }}">
+                                {{ ucfirst($assign->status->value) }}
                             </span>
                         </div>
                     @empty
