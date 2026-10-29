@@ -174,6 +174,7 @@ class AssetWebController extends Controller
 
         return view('assets.show', [
             'asset' => $asset,
+            'qrSvg' => QrCode::format('svg')->size(192)->errorCorrection('H')->generate($asset->asset_code),
         ]);
     }
 

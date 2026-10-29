@@ -201,15 +201,11 @@
             <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-6 text-center">
                 <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-3">Label Fisik QR Code</span>
                 <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl inline-block mb-4 shadow-inner">
-                    @if($asset->qr_code_path)
-                        <img src="{{ asset('storage/' . $asset->qr_code_path) }}" alt="QR Code" class="w-48 h-48 mx-auto">
-                    @else
-                        <div class="w-48 h-48 flex items-center justify-center text-xs text-slate-400">QR Code Belum Terbit</div>
-                    @endif
+                    <div class="w-48 h-48 mx-auto [&>svg]:w-full [&>svg]:h-full" role="img" aria-label="QR Code {{ $asset->asset_code }}">{!! $qrSvg !!}</div>
                 </div>
                 <div class="font-mono text-sm font-bold text-slate-800">{{ $asset->asset_code }}</div>
                 <div class="mt-4 flex gap-2">
-                    <a href="{{ asset('storage/' . $asset->qr_code_path) }}" download="{{ $asset->asset_code }}.svg" class="flex-1 py-2 px-3 text-xs font-semibold bg-indigo-50 text-indigo-700 rounded-xl hover:bg-indigo-100 transition border border-indigo-200">
+                    <a href="data:image/svg+xml;base64,{{ base64_encode($qrSvg) }}" download="{{ $asset->asset_code }}.svg" class="flex-1 py-2 px-3 text-xs font-semibold bg-indigo-50 text-indigo-700 rounded-xl hover:bg-indigo-100 transition border border-indigo-200">
                         Download SVG
                     </a>
                     <a href="{{ route('web.assets.print', ['ids' => [$asset->id]]) }}" class="flex-1 py-2 px-3 text-xs font-semibold bg-slate-800 text-white rounded-xl hover:bg-slate-900 transition text-center">

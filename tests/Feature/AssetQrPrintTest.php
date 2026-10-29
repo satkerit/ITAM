@@ -132,7 +132,8 @@ class AssetQrPrintTest extends TestCase
         $this->actingAs(User::factory()->create(['role' => 'admin']))
             ->get(route('web.assets.show', $asset))
             ->assertOk()
-            ->assertSee('storage/qrcodes/LPT-001.svg', false)
+            ->assertSee('<svg', false)
+            ->assertDontSee('<img src', false)
             ->assertSee('Active');
     }
 
