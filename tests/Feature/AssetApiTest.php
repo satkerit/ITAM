@@ -6,13 +6,22 @@ use App\Enums\AssetStatus;
 use App\Models\Asset;
 use App\Models\AssetCategory;
 use App\Models\Location;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class AssetApiTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Sanctum::actingAs(User::factory()->create());
+    }
 
     public function test_can_create_asset_with_json_spec_and_generate_qr(): void
     {

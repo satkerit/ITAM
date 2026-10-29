@@ -10,6 +10,7 @@ use App\Models\Location;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class AssetFullLifecycleTest extends TestCase
@@ -25,6 +26,8 @@ class AssetFullLifecycleTest extends TestCase
         $category = AssetCategory::create(['name' => 'Server & Workstation', 'code' => 'WSN']);
         $employee = User::factory()->create();
         $admin = User::factory()->create(['role' => 'admin']);
+
+        Sanctum::actingAs($admin);
 
         // 1. Procurement & Register (Task 5)
         $assetRes = $this->postJson('/api/v1/assets', [

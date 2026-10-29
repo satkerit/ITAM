@@ -2,16 +2,13 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Enums\AssetStatus;
-use App\Enums\AssignmentStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Assignment\AssignAssetRequest;
 use App\Http\Requests\Assignment\ReturnAssetRequest;
-use App\Models\Asset;
 use App\Models\AssetAssignment;
+use App\Services\AssetOperationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class AssetAssignmentController extends Controller
 {
@@ -40,35 +37,15 @@ class AssetAssignmentController extends Controller
         return response()->json($assignments);
     }
 
-    public function assign(AssignAssetRequest $request): JsonResponse
+    public function assign(AssignAssetRequest $request, AssetOperationService $operations): JsonResponse
     {
         $validated = $request->validated();
 
-        $asset = Asset::findOrFail($validated['asset_id']);
-
-        if ($asset->status !== AssetStatus::Available) {
-            return response()->json([
-                'message' => "Asset cannot be assigned because its status is '{$asset->status->value}' (must be 'available')",
-            ], 422);
-        }
-
-        $assignment = DB::transaction(function () use ($validated, $asset, $request) {
-            $assignedBy = $validated['assigned_by'] ?? $request->user()?->id;
-
-            $record = AssetAssignment::create([
-                'asset_id' => $asset->id,
-                'user_id' => $validated['user_id'],
-                'assigned_date' => $validated['assigned_date'],
-                'status' => AssignmentStatus::Active,
-                'notes' => $validated['notes'] ?? null,
-                'assigned_by' => $assignedBy,
-            ]);
-
-            $asset->update(['status' => AssetStatus::Deployed]);
-
-            return $record;
-        });
-
+        $assignment = $operations->assign(
+            $validated['asset_id'],
+            $validated,
+            $validated['assigned_by'] ?? $request->user()->id,
+        );
         $assignment->load(['asset', 'user', 'assignedBy']);
 
         return response()->json([
@@ -77,28 +54,9 @@ class AssetAssignmentController extends Controller
         ], 201);
     }
 
-    public function return(ReturnAssetRequest $request, AssetAssignment $assignment): JsonResponse
+    public function return(ReturnAssetRequest $request, AssetAssignment $assignment, AssetOperationService $operations): JsonResponse
     {
-        if ($assignment->status === AssignmentStatus::Returned) {
-            return response()->json([
-                'message' => 'Asset assignment is already marked as returned',
-            ], 422);
-        }
-
-        $validated = $request->validated();
-
-        DB::transaction(function () use ($validated, $assignment) {
-            $assignment->update([
-                'returned_date' => $validated['returned_date'],
-                'status' => AssignmentStatus::Returned,
-                'notes' => $validated['notes'] ?? $assignment->notes,
-            ]);
-
-            $assignment->asset->update([
-                'status' => AssetStatus::Available,
-            ]);
-        });
-
+        $assignment = $operations->checkIn($assignment, $request->validated());
         $assignment->load(['asset', 'user']);
 
         return response()->json([

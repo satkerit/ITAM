@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\AssetStatus;
+use App\Enums\AssignmentStatus;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -64,7 +65,7 @@ class Asset extends Model
 
             Storage::disk('public')->put(
                 $path,
-                QrCode::format('svg')->size(300)->errorCorrection('H')->generate($asset->asset_code)
+                $asset->qrSvg()
             );
 
             if ($previousPath && $previousPath !== $path) {
@@ -73,6 +74,14 @@ class Asset extends Model
 
             $asset->qr_code_path = $path;
         });
+    }
+
+    /**
+     * SVG QR dari kode aset. Satu-satunya sumber generator QR agar ukuran dan koreksi error konsisten.
+     */
+    public function qrSvg(int $size = 300): string
+    {
+        return QrCode::format('svg')->size($size)->errorCorrection('H')->generate($this->asset_code);
     }
 
     /**
@@ -137,7 +146,7 @@ class Asset extends Model
 
     public function activeAssignment(): HasOne
     {
-        return $this->hasOne(AssetAssignment::class)->where('status', 'active')->latestOfMany();
+        return $this->hasOne(AssetAssignment::class)->where('status', AssignmentStatus::Active)->latestOfMany();
     }
 
     public function mutations(): HasMany
@@ -158,6 +167,17 @@ class Asset extends Model
     public function softwareLicenses(): HasMany
     {
         return $this->hasMany(SoftwareLicense::class);
+    }
+
+    /**
+     * Aset dengan riwayat operasional tidak boleh dihapus agar audit trail tetap utuh.
+     */
+    public function hasOperationalHistory(): bool
+    {
+        return $this->assignments()->exists()
+            || $this->mutations()->exists()
+            || $this->maintenanceLogs()->exists()
+            || $this->disposal()->exists();
     }
 
     public function scopeAvailable(Builder $query): void

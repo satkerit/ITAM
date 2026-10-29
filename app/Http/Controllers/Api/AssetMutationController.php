@@ -2,14 +2,12 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Enums\AssetStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Mutation\MutateAssetRequest;
-use App\Models\Asset;
 use App\Models\AssetMutation;
+use App\Services\AssetOperationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class AssetMutationController extends Controller
 {
@@ -35,43 +33,15 @@ class AssetMutationController extends Controller
         return response()->json($mutations);
     }
 
-    public function store(MutateAssetRequest $request): JsonResponse
+    public function store(MutateAssetRequest $request, AssetOperationService $operations): JsonResponse
     {
         $validated = $request->validated();
 
-        $asset = Asset::findOrFail($validated['asset_id']);
-
-        if (in_array($asset->status, [AssetStatus::Sold, AssetStatus::Disposed, AssetStatus::Retired])) {
-            return response()->json([
-                'message' => "Cannot mutate asset with end-of-life status '{$asset->status->value}'",
-            ], 422);
-        }
-
-        if ($asset->location_id === (int) $validated['to_location_id']) {
-            return response()->json([
-                'message' => 'Destination location cannot be the same as current asset location',
-            ], 422);
-        }
-
-        $mutation = DB::transaction(function () use ($validated, $asset, $request) {
-            $processedBy = $validated['processed_by'] ?? $request->user()?->id ?? 1;
-
-            $record = AssetMutation::create([
-                'asset_id' => $asset->id,
-                'from_location_id' => $asset->location_id,
-                'to_location_id' => $validated['to_location_id'],
-                'mutation_date' => $validated['mutation_date'],
-                'reason' => $validated['reason'],
-                'processed_by' => $processedBy,
-            ]);
-
-            $asset->update([
-                'location_id' => $validated['to_location_id'],
-            ]);
-
-            return $record;
-        });
-
+        $mutation = $operations->mutate(
+            $validated['asset_id'],
+            $validated,
+            $validated['processed_by'] ?? $request->user()->id,
+        );
         $mutation->load(['asset', 'fromLocation', 'toLocation', 'processedBy']);
 
         return response()->json([

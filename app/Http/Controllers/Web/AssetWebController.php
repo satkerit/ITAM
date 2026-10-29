@@ -12,9 +12,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AssetWebController extends Controller
@@ -136,18 +134,11 @@ class AssetWebController extends Controller
 
     public function destroy(Asset $asset): RedirectResponse
     {
-        if ($asset->status === AssetStatus::Deployed) {
-            return redirect()->route('web.assets.index')->with('error', 'Aset sedang dipinjamkan (Deployed). Lakukan Check-in terlebih dahulu sebelum menghapus.');
+        if ($asset->hasOperationalHistory()) {
+            return redirect()->route('web.assets.index')->with('error', 'Aset memiliki riwayat operasional (peminjaman, mutasi, maintenance, atau disposal) sehingga tidak dapat dihapus.');
         }
 
-        DB::transaction(function () use ($asset): void {
-            $asset->assignments()->delete();
-            $asset->mutations()->delete();
-            $asset->maintenanceLogs()->delete();
-            $asset->softwareLicenses()->delete();
-            $asset->disposal()->delete();
-            $asset->delete();
-        });
+        $asset->delete();
 
         if ($asset->photo_path) {
             Storage::disk('public')->delete($asset->photo_path);
@@ -156,7 +147,7 @@ class AssetWebController extends Controller
             Storage::disk('public')->delete($asset->qr_code_path);
         }
 
-        return redirect()->route('web.assets.index')->with('success', 'Aset beserta riwayat operasionalnya berhasil dihapus.');
+        return redirect()->route('web.assets.index')->with('success', 'Aset berhasil dihapus.');
     }
 
     public function show(Asset $asset): View
@@ -175,7 +166,7 @@ class AssetWebController extends Controller
 
         return view('assets.show', [
             'asset' => $asset,
-            'qrSvg' => QrCode::format('svg')->size(192)->errorCorrection('H')->generate($asset->asset_code),
+            'qrSvg' => $asset->qrSvg(192),
         ]);
     }
 
@@ -203,7 +194,7 @@ class AssetWebController extends Controller
         $qrPixels = ['small' => 120, 'medium' => 180, 'large' => 240][$size];
 
         $qrCodes = $assets->mapWithKeys(fn (Asset $asset) => [
-            $asset->id => QrCode::format('svg')->size($qrPixels)->errorCorrection('H')->generate($asset->asset_code),
+            $asset->id => $asset->qrSvg($qrPixels),
         ]);
 
         return view('assets.print', [
@@ -274,6 +265,19 @@ class AssetWebController extends Controller
             }
 
             $purchaseDate = trim((string) ($row['purchase_date'] ?? ''));
+            $status = strtolower(trim((string) ($row['status'] ?? ''))) ?: AssetStatus::Available->value;
+
+            if ($purchaseDate !== '' && strtotime($purchaseDate) === false) {
+                $skipped++;
+
+                continue;
+            }
+
+            if (! in_array($status, array_column(AssetStatus::cases(), 'value'), true)) {
+                $skipped++;
+
+                continue;
+            }
 
             Asset::create([
                 'asset_code' => $assetCode,
@@ -284,7 +288,7 @@ class AssetWebController extends Controller
                 'purchase_date' => $purchaseDate !== '' ? $purchaseDate : null,
                 'purchase_cost' => is_numeric($row['purchase_cost'] ?? null) ? $row['purchase_cost'] : null,
                 'useful_life_months' => is_numeric($row['useful_life_months'] ?? null) ? (int) $row['useful_life_months'] : null,
-                'status' => trim((string) ($row['status'] ?? '')) ?: 'available',
+                'status' => $status,
                 'notes' => trim((string) ($row['notes'] ?? '')) ?: null,
             ]);
             $created++;

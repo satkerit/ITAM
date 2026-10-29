@@ -9,6 +9,7 @@ use App\Models\AssetCategory;
 use App\Models\Location;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class MaintenanceApiTest extends TestCase
@@ -28,6 +29,8 @@ class MaintenanceApiTest extends TestCase
         $this->location = Location::create(['name' => 'HQ Service Center', 'address' => 'Gatot Subroto']);
         $this->category = AssetCategory::create(['name' => 'Printer', 'code' => 'PRT']);
         $this->technician = User::factory()->create(['role' => 'technician']);
+
+        Sanctum::actingAs($this->technician);
     }
 
     public function test_can_create_maintenance_and_complete_with_cost_and_status_sync(): void

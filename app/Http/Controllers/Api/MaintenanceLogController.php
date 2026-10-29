@@ -2,16 +2,13 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Enums\AssetStatus;
-use App\Enums\MaintenanceStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Maintenance\CompleteMaintenanceRequest;
 use App\Http\Requests\Maintenance\StoreMaintenanceRequest;
-use App\Models\Asset;
 use App\Models\MaintenanceLog;
+use App\Services\AssetOperationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class MaintenanceLogController extends Controller
 {
@@ -35,36 +32,15 @@ class MaintenanceLogController extends Controller
         return response()->json($logs);
     }
 
-    public function store(StoreMaintenanceRequest $request): JsonResponse
+    public function store(StoreMaintenanceRequest $request, AssetOperationService $operations): JsonResponse
     {
         $validated = $request->validated();
 
-        $asset = Asset::findOrFail($validated['asset_id']);
-
-        if (in_array($asset->status, [AssetStatus::Sold, AssetStatus::Disposed, AssetStatus::Retired])) {
-            return response()->json([
-                'message' => "Cannot send asset with status '{$asset->status->value}' to maintenance",
-            ], 422);
-        }
-
-        $log = DB::transaction(function () use ($validated, $asset, $request) {
-            $performedBy = $validated['performed_by'] ?? $request->user()?->id;
-
-            $record = MaintenanceLog::create([
-                'asset_id' => $asset->id,
-                'maintenance_date' => $validated['maintenance_date'],
-                'description' => $validated['description'],
-                'cost' => $validated['cost'] ?? 0,
-                'vendor_name' => $validated['vendor_name'] ?? null,
-                'status' => MaintenanceStatus::InProgress,
-                'performed_by' => $performedBy,
-            ]);
-
-            $asset->update(['status' => AssetStatus::Maintenance]);
-
-            return $record;
-        });
-
+        $log = $operations->recordMaintenance(
+            $validated['asset_id'],
+            $validated,
+            $validated['performed_by'] ?? $request->user()->id,
+        );
         $log->load(['asset', 'performedBy']);
 
         return response()->json([
@@ -73,37 +49,9 @@ class MaintenanceLogController extends Controller
         ], 201);
     }
 
-    public function complete(CompleteMaintenanceRequest $request, MaintenanceLog $maintenance): JsonResponse
+    public function complete(CompleteMaintenanceRequest $request, MaintenanceLog $maintenance, AssetOperationService $operations): JsonResponse
     {
-        if ($maintenance->status === MaintenanceStatus::Completed) {
-            return response()->json([
-                'message' => 'Maintenance record is already marked as completed',
-            ], 422);
-        }
-
-        $validated = $request->validated();
-
-        DB::transaction(function () use ($validated, $maintenance) {
-            $updateData = [
-                'completed_date' => $validated['completed_date'],
-                'status' => MaintenanceStatus::Completed,
-            ];
-
-            if (isset($validated['cost'])) {
-                $updateData['cost'] = $validated['cost'];
-            }
-
-            if (! empty($validated['notes'])) {
-                $updateData['description'] = $maintenance->description."\n[Completion notes: {$validated['notes']}]";
-            }
-
-            $maintenance->update($updateData);
-
-            $maintenance->asset->update([
-                'status' => AssetStatus::Available,
-            ]);
-        });
-
+        $maintenance = $operations->completeMaintenance($maintenance, $request->validated());
         $maintenance->load(['asset', 'performedBy']);
 
         return response()->json([

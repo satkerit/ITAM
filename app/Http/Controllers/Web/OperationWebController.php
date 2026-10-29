@@ -3,9 +3,6 @@
 namespace App\Http\Controllers\Web;
 
 use App\Enums\AssetStatus;
-use App\Enums\AssignmentStatus;
-use App\Enums\DisposalType;
-use App\Enums\MaintenanceStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Asset;
 use App\Models\AssetAssignment;
@@ -14,10 +11,10 @@ use App\Models\AssetMutation;
 use App\Models\Location;
 use App\Models\MaintenanceLog;
 use App\Models\User;
+use App\Services\AssetOperationService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class OperationWebController extends Controller
 {
@@ -43,7 +40,7 @@ class OperationWebController extends Controller
         ]);
     }
 
-    public function assignmentsStore(Request $request): RedirectResponse
+    public function assignmentsStore(Request $request, AssetOperationService $operations): RedirectResponse
     {
         $validated = $request->validate([
             'asset_id' => ['required', 'exists:assets,id'],
@@ -52,48 +49,19 @@ class OperationWebController extends Controller
             'notes' => ['nullable', 'string'],
         ]);
 
-        $actorId = auth()->id() ?? User::query()->first()?->id ?? 1;
-
-        DB::transaction(function () use ($validated, $actorId) {
-            $asset = Asset::query()->lockForUpdate()->findOrFail($validated['asset_id']);
-
-            if ($asset->status !== AssetStatus::Available) {
-                throw new \RuntimeException('Aset hanya dapat dipinjamkan jika berstatus Available.');
-            }
-
-            AssetAssignment::create([
-                'asset_id' => $asset->id,
-                'user_id' => $validated['user_id'],
-                'assigned_by' => $actorId,
-                'assigned_date' => $validated['assigned_date'],
-                'status' => AssignmentStatus::Active,
-                'notes' => $validated['notes'] ?? null,
-            ]);
-
-            $asset->update(['status' => AssetStatus::Deployed]);
-        });
+        $operations->assign($validated['asset_id'], $validated, $request->user()->id);
 
         return redirect()->route('web.assignments.index')->with('success', 'Penugasan aset (Check-out) berhasil disimpan!');
     }
 
-    public function assignmentsCheckin(Request $request, AssetAssignment $assignment): RedirectResponse
+    public function assignmentsCheckin(Request $request, AssetAssignment $assignment, AssetOperationService $operations): RedirectResponse
     {
         $validated = $request->validate([
             'returned_date' => ['required', 'date'],
             'notes' => ['nullable', 'string'],
         ]);
 
-        DB::transaction(function () use ($assignment, $validated) {
-            $assignment->update([
-                'returned_date' => $validated['returned_date'],
-                'status' => AssignmentStatus::Returned,
-                'notes' => $validated['notes'] ?? $assignment->notes,
-            ]);
-
-            $assignment->asset->update([
-                'status' => AssetStatus::Available,
-            ]);
-        });
+        $operations->checkIn($assignment, $validated);
 
         return redirect()->route('web.assignments.index')->with('success', 'Pengembalian aset (Check-in) berhasil dicatat!');
     }
@@ -120,7 +88,7 @@ class OperationWebController extends Controller
         ]);
     }
 
-    public function mutationsStore(Request $request): RedirectResponse
+    public function mutationsStore(Request $request, AssetOperationService $operations): RedirectResponse
     {
         $validated = $request->validate([
             'asset_id' => ['required', 'exists:assets,id'],
@@ -130,24 +98,7 @@ class OperationWebController extends Controller
             'notes' => ['nullable', 'string'],
         ]);
 
-        $actorId = auth()->id() ?? User::query()->first()?->id ?? 1;
-
-        DB::transaction(function () use ($validated, $actorId) {
-            $asset = Asset::query()->lockForUpdate()->findOrFail($validated['asset_id']);
-
-            AssetMutation::create([
-                'asset_id' => $asset->id,
-                'from_location_id' => $asset->location_id,
-                'to_location_id' => $validated['to_location_id'],
-                'processed_by' => $actorId,
-                'mutation_date' => $validated['mutation_date'],
-                'reason' => $validated['reason'],
-            ]);
-
-            $asset->update([
-                'location_id' => $validated['to_location_id'],
-            ]);
-        });
+        $operations->mutate($validated['asset_id'], $validated, $request->user()->id);
 
         return redirect()->route('web.mutations.index')->with('success', 'Mutasi lokasi aset berhasil diproses!');
     }
@@ -171,7 +122,7 @@ class OperationWebController extends Controller
         ]);
     }
 
-    public function maintenancesStore(Request $request): RedirectResponse
+    public function maintenancesStore(Request $request, AssetOperationService $operations): RedirectResponse
     {
         $validated = $request->validate([
             'asset_id' => ['required', 'exists:assets,id'],
@@ -183,33 +134,18 @@ class OperationWebController extends Controller
             'vendor' => ['nullable', 'string', 'max:255'],
         ]);
 
-        $actorId = auth()->id() ?? User::query()->first()?->id ?? 1;
-
-        DB::transaction(function () use ($validated, $actorId) {
-            $asset = Asset::query()->lockForUpdate()->findOrFail($validated['asset_id']);
-
-            MaintenanceLog::create([
-                'asset_id' => $asset->id,
-                'performed_by' => $actorId,
-                'maintenance_date' => $validated['service_date'],
-                'completed_date' => $validated['completion_date'] ?? null,
-                'description' => $validated['issue_description'],
-                'cost' => $validated['cost'] ?? 0,
-                'vendor_name' => $validated['vendor'] ?? null,
-                'status' => empty($validated['completion_date']) ? MaintenanceStatus::InProgress : MaintenanceStatus::Completed,
-            ]);
-
-            $newStatus = empty($validated['completion_date'])
-                ? AssetStatus::Maintenance
-                : AssetStatus::Available;
-
-            $asset->update(['status' => $newStatus]);
-        });
+        $operations->recordMaintenance($validated['asset_id'], [
+            'maintenance_date' => $validated['service_date'],
+            'description' => $validated['issue_description'],
+            'completed_date' => $validated['completion_date'] ?? null,
+            'cost' => $validated['cost'] ?? 0,
+            'vendor_name' => $validated['vendor'] ?? null,
+        ], $request->user()->id);
 
         return redirect()->route('web.maintenances.index')->with('success', 'Pencatatan servis/pemeliharaan aset berhasil disimpan!');
     }
 
-    public function maintenancesComplete(Request $request, MaintenanceLog $maintenance): RedirectResponse
+    public function maintenancesComplete(Request $request, MaintenanceLog $maintenance, AssetOperationService $operations): RedirectResponse
     {
         $validated = $request->validate([
             'completion_date' => ['required', 'date'],
@@ -217,17 +153,10 @@ class OperationWebController extends Controller
             'cost' => ['nullable', 'numeric', 'min:0'],
         ]);
 
-        DB::transaction(function () use ($maintenance, $validated) {
-            $maintenance->update([
-                'completed_date' => $validated['completion_date'],
-                'cost' => $validated['cost'] ?? $maintenance->cost,
-                'status' => MaintenanceStatus::Completed,
-            ]);
-
-            $maintenance->asset->update([
-                'status' => AssetStatus::Available,
-            ]);
-        });
+        $operations->completeMaintenance($maintenance, [
+            'completed_date' => $validated['completion_date'],
+            'cost' => $validated['cost'] ?? null,
+        ]);
 
         return redirect()->route('web.maintenances.index')->with('success', 'Servis selesai! Status aset dikembalikan ke Available.');
     }
@@ -251,7 +180,7 @@ class OperationWebController extends Controller
         ]);
     }
 
-    public function disposalsStore(Request $request): RedirectResponse
+    public function disposalsStore(Request $request, AssetOperationService $operations): RedirectResponse
     {
         $validated = $request->validate([
             'asset_id' => ['required', 'exists:assets,id'],
@@ -262,30 +191,12 @@ class OperationWebController extends Controller
             'notes' => ['nullable', 'string'],
         ]);
 
-        $actorId = auth()->id() ?? User::query()->first()?->id ?? 1;
-
-        DB::transaction(function () use ($validated, $actorId) {
-            $asset = Asset::query()->lockForUpdate()->findOrFail($validated['asset_id']);
-
-            if ($asset->status === AssetStatus::Deployed) {
-                throw new \RuntimeException('Aset berstatus Deployed tidak boleh di-disposal langsung.');
-            }
-
-            AssetDisposal::create([
-                'asset_id' => $asset->id,
-                'authorized_by' => $actorId,
-                'disposal_type' => $validated['disposal_type'],
-                'date' => $validated['disposal_date'],
-                'value' => $validated['sale_amount'] ?? 0,
-                'notes' => $validated['reason'].($validated['notes'] ? ' - '.$validated['notes'] : ''),
-            ]);
-
-            $newStatus = $validated['disposal_type'] === DisposalType::Sale->value
-                ? AssetStatus::Sold
-                : AssetStatus::Disposed;
-
-            $asset->update(['status' => $newStatus]);
-        });
+        $operations->dispose($validated['asset_id'], [
+            'disposal_type' => $validated['disposal_type'],
+            'date' => $validated['disposal_date'],
+            'value' => $validated['sale_amount'] ?? 0,
+            'notes' => $validated['reason'].(filled($validated['notes'] ?? null) ? ' - '.$validated['notes'] : ''),
+        ], $request->user()->id);
 
         return redirect()->route('web.disposals.index')->with('success', 'Penjualan / Pemusnahan aset telah dicatat.');
     }

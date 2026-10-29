@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Web;
 
+use App\Enums\AssignmentStatus;
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\Location;
@@ -93,7 +94,7 @@ class UserWebController extends Controller
 
     public function destroy(User $user): RedirectResponse
     {
-        if ($user->assignments()->where('status', 'active')->exists()) {
+        if ($user->assignments()->where('status', AssignmentStatus::Active)->exists()) {
             return redirect()->route('web.users.index')->with('error', 'Gagal menghapus: Pengguna masih memiliki peminjaman unit aset aktif.');
         }
 

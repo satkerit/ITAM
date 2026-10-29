@@ -9,6 +9,7 @@ use App\Models\AssetCategory;
 use App\Models\Location;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class AssetDisposalTest extends TestCase
@@ -28,6 +29,8 @@ class AssetDisposalTest extends TestCase
         $this->location = Location::create(['name' => 'HQ Central', 'address' => 'Jl. Thamrin']);
         $this->category = AssetCategory::create(['name' => 'Server', 'code' => 'SRV']);
         $this->manager = User::factory()->create(['role' => 'admin']);
+
+        Sanctum::actingAs($this->manager);
     }
 
     public function test_can_dispose_asset_via_sale_and_update_to_sold_status(): void

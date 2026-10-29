@@ -3,11 +3,15 @@
 namespace Tests\Feature;
 
 use App\Enums\AssetStatus;
+use App\Enums\AssignmentStatus;
 use App\Models\Asset;
+use App\Models\AssetAssignment;
 use App\Models\AssetCategory;
 use App\Models\Location;
 use App\Models\User;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class AssetOperationsTest extends TestCase
@@ -30,6 +34,8 @@ class AssetOperationsTest extends TestCase
         $this->locationB = Location::create(['name' => 'Kantor Bandung', 'address' => 'Jl. Asia Afrika']);
         $this->category = AssetCategory::create(['name' => 'Laptop', 'code' => 'LPT']);
         $this->user = User::factory()->create(['location_id' => $this->locationA->id]);
+
+        Sanctum::actingAs($this->user);
     }
 
     public function test_can_assign_and_return_asset_with_status_transitions(): void
@@ -65,6 +71,30 @@ class AssetOperationsTest extends TestCase
             ->assertJsonPath('data.status', 'returned');
 
         $this->assertEquals(AssetStatus::Available, $asset->fresh()->status);
+    }
+
+    public function test_database_rejects_second_active_assignment_for_same_asset(): void
+    {
+        $asset = Asset::create([
+            'asset_code' => 'LPT-002',
+            'name' => 'ThinkPad X1',
+            'category_id' => $this->category->id,
+            'location_id' => $this->locationA->id,
+            'status' => AssetStatus::Available,
+        ]);
+
+        $attributes = [
+            'asset_id' => $asset->id,
+            'user_id' => $this->user->id,
+            'assigned_date' => '2026-10-01',
+            'status' => AssignmentStatus::Active,
+        ];
+
+        AssetAssignment::create($attributes);
+
+        $this->expectException(QueryException::class);
+
+        AssetAssignment::create($attributes);
     }
 
     public function test_cannot_assign_asset_when_not_available(): void

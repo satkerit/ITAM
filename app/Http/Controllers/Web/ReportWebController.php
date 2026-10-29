@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Web;
 
+use App\Enums\AssetStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Asset;
 use App\Models\AssetCategory;
@@ -17,9 +18,9 @@ class ReportWebController extends Controller
         $locations = Location::query()
             ->withCount([
                 'assets as total_assets',
-                'assets as available_assets' => fn ($q) => $q->where('status', 'available'),
-                'assets as deployed_assets' => fn ($q) => $q->where('status', 'deployed'),
-                'assets as maintenance_assets' => fn ($q) => $q->where('status', 'maintenance'),
+                'assets as available_assets' => fn ($q) => $q->where('status', AssetStatus::Available),
+                'assets as deployed_assets' => fn ($q) => $q->where('status', AssetStatus::Deployed),
+                'assets as maintenance_assets' => fn ($q) => $q->where('status', AssetStatus::Maintenance),
             ])
             ->withSum('assets as total_asset_value', 'purchase_cost')
             ->get();
@@ -37,8 +38,8 @@ class ReportWebController extends Controller
 
         $totalAssets = Asset::count();
         $totalValuation = Asset::sum('purchase_cost');
-        $totalInMaintenance = Asset::where('status', 'maintenance')->count();
-        $totalDisposed = Asset::whereIn('status', ['archived', 'sold', 'defective'])->count();
+        $totalInMaintenance = Asset::where('status', AssetStatus::Maintenance)->count();
+        $totalDisposed = Asset::whereIn('status', [AssetStatus::Retired, AssetStatus::Sold, AssetStatus::Disposed])->count();
 
         $selectedAsset = null;
         if ($request->filled('asset_code')) {

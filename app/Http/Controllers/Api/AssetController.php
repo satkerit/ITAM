@@ -12,7 +12,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
-use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class AssetController extends Controller
 {
@@ -93,7 +92,7 @@ class AssetController extends Controller
 
     public function destroy(Asset $asset): JsonResponse
     {
-        if ($asset->assignments()->exists() || $asset->mutations()->exists() || $asset->disposal()->exists()) {
+        if ($asset->hasOperationalHistory()) {
             return response()->json([
                 'message' => 'Cannot delete asset with operational history or disposal records',
             ], 422);
@@ -134,7 +133,7 @@ class AssetController extends Controller
 
     public function qrImage(Asset $asset): Response
     {
-        $svg = QrCode::format('svg')->size(300)->generate($asset->asset_code);
+        $svg = $asset->qrSvg();
 
         return response($svg, 200, [
             'Content-Type' => 'image/svg+xml',

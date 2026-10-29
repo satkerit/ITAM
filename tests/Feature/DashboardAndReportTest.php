@@ -11,6 +11,7 @@ use App\Models\Location;
 use App\Models\MaintenanceLog;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class DashboardAndReportTest extends TestCase
@@ -33,6 +34,8 @@ class DashboardAndReportTest extends TestCase
         $this->locSurabaya = Location::create(['name' => 'Surabaya Hub', 'address' => 'Pemuda']);
         $this->catLaptop = AssetCategory::create(['name' => 'Laptop', 'code' => 'LPT']);
         $this->user = User::factory()->create();
+
+        Sanctum::actingAs($this->user);
 
         $asset1 = Asset::create([
             'asset_code' => 'LPT-JKT-001',
