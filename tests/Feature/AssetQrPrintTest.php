@@ -137,6 +137,48 @@ class AssetQrPrintTest extends TestCase
             ->assertSee('Active');
     }
 
+    public function test_scan_result_shows_detailed_asset_information(): void
+    {
+        $location = Location::create(['name' => 'Kantor Pusat', 'address' => 'Jl. Sudirman']);
+        $category = AssetCategory::create(['name' => 'Laptop', 'code' => 'LPT']);
+        $asset = $this->makeAsset('LPT-001', $location, $category);
+        $asset->update([
+            'serial_number' => 'SN-XYZ-998877',
+            'purchase_store' => 'Toko Komputer Maju',
+            'purchase_cost' => 12500000,
+            'purchase_date' => '2025-03-15',
+            'specifications' => ['processor' => 'Intel i5', 'ram' => '16GB'],
+        ]);
+
+        $this->actingAs(User::factory()->create(['role' => 'admin']))
+            ->get(route('web.assets.scan', ['code' => 'LPT-001']))
+            ->assertOk()
+            ->assertSee('SN-XYZ-998877')
+            ->assertSee('Toko Komputer Maju')
+            ->assertSee('Rp 12.500.000')
+            ->assertSee('15 Mar 2025')
+            ->assertSee('Intel i5')
+            ->assertSee('16GB');
+    }
+
+    public function test_scan_rejects_malicious_code_input(): void
+    {
+        $location = Location::create(['name' => 'Kantor Pusat', 'address' => 'Jl. Sudirman']);
+        $category = AssetCategory::create(['name' => 'Laptop', 'code' => 'LPT']);
+        $this->makeAsset('LPT-001', $location, $category);
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $this->actingAs($admin)
+            ->get(route('web.assets.scan', ['code' => "<script>alert(1)</script>' OR 1=1--"]))
+            ->assertSessionHasErrors('code')
+            ->assertDontSee('<script>alert(1)</script>', false);
+
+        $this->actingAs($admin)
+            ->getJson('/api/v1/assets/scan?'.http_build_query(['code' => "LPT-001' OR '1'='1"]))
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('code');
+    }
+
     public function test_label_size_option_is_applied(): void
     {
         $location = Location::create(['name' => 'Kantor Pusat', 'address' => 'Jl. Sudirman']);

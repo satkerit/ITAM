@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Enums\AssetStatus;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Asset\ScanAssetRequest;
 use App\Http\Requests\Asset\StoreAssetRequest;
 use App\Http\Requests\Asset\UpdateAssetRequest;
 use App\Models\Asset;
@@ -109,9 +110,9 @@ class AssetController extends Controller
         ]);
     }
 
-    public function scan(Request $request): JsonResponse
+    public function scan(ScanAssetRequest $request): JsonResponse
     {
-        $code = $request->query('code');
+        $code = $request->validated('code');
 
         if (! $code) {
             return response()->json(['message' => 'QR code parameter is required'], 400);

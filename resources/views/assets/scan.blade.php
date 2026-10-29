@@ -100,6 +100,36 @@
                 <h3 class="text-lg font-bold text-slate-900">{{ $foundAsset->name }}</h3>
                 <p class="text-xs text-slate-500 mt-0.5 mb-4">{{ $foundAsset->category->name }} &bull; {{ $foundAsset->location->name }}</p>
 
+                <dl class="grid grid-cols-2 gap-3 text-xs mb-4">
+                    <div>
+                        <dt class="text-slate-400 uppercase font-bold">Nomor Seri</dt>
+                        <dd class="font-mono text-slate-800">{{ $foundAsset->serial_number ?? '-' }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-slate-400 uppercase font-bold">Tanggal Beli</dt>
+                        <dd class="text-slate-800">{{ $foundAsset->purchase_date?->format('d M Y') ?? '-' }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-slate-400 uppercase font-bold">Biaya Perolehan</dt>
+                        <dd class="font-bold text-slate-900">{{ $foundAsset->purchase_cost ? 'Rp ' . number_format($foundAsset->purchase_cost, 0, ',', '.') : '-' }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-slate-400 uppercase font-bold">Tempat / Toko</dt>
+                        <dd class="text-slate-800">{{ $foundAsset->purchase_store ?? '-' }}</dd>
+                    </div>
+                </dl>
+
+                @if(!empty($foundAsset->specifications))
+                    <div class="mb-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        @foreach($foundAsset->specifications as $specKey => $specValue)
+                            <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-100 flex items-center justify-between text-xs gap-2">
+                                <span class="font-bold uppercase text-slate-500">{{ str_replace('_', ' ', $specKey) }}</span>
+                                <span class="font-semibold text-slate-900 text-right">{{ is_array($specValue) ? json_encode($specValue) : $specValue }}</span>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+
                 @if($foundAsset->activeAssignment)
                     <div class="p-3 bg-indigo-50 rounded-xl mb-4 text-xs text-slate-700 border border-indigo-100">
                         <span class="font-bold text-indigo-700">Dipegang oleh:</span> {{ $foundAsset->activeAssignment->user->name }}
@@ -171,11 +201,19 @@
                 async openCamera() {
                     const camera = this.cameras[this.cameraIndex];
                     const boxSize = Math.min(window.innerWidth * 0.7, 280);
+                    // videoConstraints diisi eksplisit agar resolusi & kamera belakang konsisten di Android dan iOS
+                    const videoConstraints = {
+                        ...(camera ? { deviceId: { exact: camera.id } } : { facingMode: { ideal: 'environment' } }),
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 },
+                    };
+
                     await this.scanner.start(
                         camera ? camera.id : { facingMode: 'environment' },
                         {
                             fps: 10,
                             qrbox: { width: boxSize, height: boxSize },
+                            videoConstraints,
                             experimentalFeatures: { useBarCodeDetectorIfSupported: true },
                         },
                         (decodedText) => this.onScan(decodedText),

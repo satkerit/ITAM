@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Web;
 
 use App\Enums\AssetStatus;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Asset\ScanAssetRequest;
 use App\Models\Asset;
 use App\Models\AssetCategory;
 use App\Models\Location;
@@ -213,18 +214,20 @@ class AssetWebController extends Controller
         ]);
     }
 
-    public function scan(Request $request): View
+    public function scan(ScanAssetRequest $request): View
     {
+        $code = $request->validated('code');
         $foundAsset = null;
-        if ($request->filled('code')) {
-            $foundAsset = Asset::where('asset_code', $request->query('code'))
+
+        if ($code !== null && $code !== '') {
+            $foundAsset = Asset::where('asset_code', $code)
                 ->with(['category', 'location', 'activeAssignment.user'])
                 ->first();
         }
 
         return view('assets.scan', [
             'foundAsset' => $foundAsset,
-            'code' => $request->query('code'),
+            'code' => $code,
         ]);
     }
 
