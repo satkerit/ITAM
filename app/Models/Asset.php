@@ -194,4 +194,16 @@ class Asset extends Model
     {
         $query->where('category_id', $categoryId);
     }
+
+    /**
+     * Batasi kueri ke aset yang boleh dilihat pengguna sesuai lokasinya.
+     */
+    public function scopeVisibleTo(Builder $query, ?User $user): void
+    {
+        $locationId = $user?->visibleLocationId();
+
+        if ($locationId !== null) {
+            $query->where('location_id', $locationId);
+        }
+    }
 }

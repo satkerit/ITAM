@@ -17,7 +17,9 @@ class AssetController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $query = Asset::query()->with(['category:id,name,code', 'location:id,name']);
+        $query = Asset::query()
+            ->visibleTo($request->user())
+            ->with(['category:id,name,code', 'location:id,name']);
 
         if ($request->filled('status')) {
             $query->where('status', $request->query('status'));
@@ -63,6 +65,8 @@ class AssetController extends Controller
 
     public function show(Asset $asset): JsonResponse
     {
+        $this->authorize('view', $asset);
+
         $asset->load([
             'category',
             'location',
@@ -81,6 +85,8 @@ class AssetController extends Controller
 
     public function update(UpdateAssetRequest $request, Asset $asset): JsonResponse
     {
+        $this->authorize('update', $asset);
+
         $asset->update($request->validated());
         $asset->load(['category', 'location']);
 
@@ -92,6 +98,8 @@ class AssetController extends Controller
 
     public function destroy(Asset $asset): JsonResponse
     {
+        $this->authorize('delete', $asset);
+
         if ($asset->hasOperationalHistory()) {
             return response()->json([
                 'message' => 'Cannot delete asset with operational history or disposal records',
@@ -117,7 +125,9 @@ class AssetController extends Controller
             return response()->json(['message' => 'QR code parameter is required'], 400);
         }
 
-        $asset = Asset::where('asset_code', $code)
+        $asset = Asset::query()
+            ->visibleTo($request->user())
+            ->where('asset_code', $code)
             ->with(['category', 'location', 'activeAssignment.user:id,name,email'])
             ->first();
 
@@ -133,6 +143,8 @@ class AssetController extends Controller
 
     public function qrImage(Asset $asset): Response
     {
+        $this->authorize('view', $asset);
+
         $svg = $asset->qrSvg();
 
         return response($svg, 200, [

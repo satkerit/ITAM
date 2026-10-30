@@ -34,6 +34,26 @@ class User extends Authenticatable
         ];
     }
 
+    public function isAdmin(): bool
+    {
+        return $this->role === UserRole::Admin;
+    }
+
+    /**
+     * Batas lokasi yang boleh diakses pengguna. Null berarti tidak dibatasi.
+     */
+    public function visibleLocationId(): ?int
+    {
+        return $this->isAdmin() ? null : $this->location_id;
+    }
+
+    public function canAccessLocation(?int $locationId): bool
+    {
+        $scopedLocationId = $this->visibleLocationId();
+
+        return $scopedLocationId === null || $scopedLocationId === $locationId;
+    }
+
     public function location(): BelongsTo
     {
         return $this->belongsTo(Location::class);

@@ -2,7 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Enums\AssetStatus;
 use App\Enums\UserRole;
+use App\Models\Asset;
+use App\Models\AssetCategory;
+use App\Models\Location;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
@@ -133,5 +137,114 @@ class AuthorizationTest extends TestCase
         $response->assertHeader('X-Frame-Options', 'SAMEORIGIN');
         $response->assertHeader('X-Content-Type-Options', 'nosniff');
         $response->assertHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+
+        $policy = $response->headers->get('Content-Security-Policy');
+
+        $this->assertNotNull($policy);
+        $this->assertStringContainsString("default-src 'self'", $policy);
+        $this->assertStringContainsString("object-src 'none'", $policy);
+        $this->assertStringContainsString("frame-ancestors 'self'", $policy);
+        $this->assertMatchesRegularExpression("/script-src [^;]*'nonce-[A-Za-z0-9+\\/=]+'/", $policy);
+    }
+
+    public function test_staff_only_sees_assets_in_their_location(): void
+    {
+        Storage::fake('public');
+
+        $locationA = Location::create(['name' => 'Kantor A', 'address' => 'Jl. A No. 1']);
+        $locationB = Location::create(['name' => 'Kantor B', 'address' => 'Jl. B No. 2']);
+        $category = AssetCategory::create(['name' => 'Laptop', 'code' => 'LPT']);
+
+        $ownAsset = Asset::create([
+            'asset_code' => 'LPT-A-001',
+            'name' => 'Laptop Cabang A',
+            'category_id' => $category->id,
+            'location_id' => $locationA->id,
+            'status' => AssetStatus::Available,
+        ]);
+        $otherAsset = Asset::create([
+            'asset_code' => 'LPT-B-002',
+            'name' => 'Laptop Cabang B',
+            'category_id' => $category->id,
+            'location_id' => $locationB->id,
+            'status' => AssetStatus::Available,
+        ]);
+
+        $staff = User::factory()->staff()->create(['location_id' => $locationA->id]);
+
+        $this->actingAs($staff)->get(route('web.assets.index'))
+            ->assertOk()
+            ->assertSee($ownAsset->asset_code)
+            ->assertDontSee($otherAsset->asset_code);
+
+        $this->actingAs($staff)->get(route('web.assets.show', $otherAsset))->assertForbidden();
+
+        $this->actingAs($staff)->get(route('web.assets.scan', ['code' => $otherAsset->asset_code]))
+            ->assertOk()
+            ->assertDontSee($otherAsset->name);
+    }
+
+    public function test_admin_sees_assets_from_all_locations(): void
+    {
+        Storage::fake('public');
+
+        $locationA = Location::create(['name' => 'Kantor A', 'address' => 'Jl. A No. 1']);
+        $locationB = Location::create(['name' => 'Kantor B', 'address' => 'Jl. B No. 2']);
+        $category = AssetCategory::create(['name' => 'Laptop', 'code' => 'LPT']);
+
+        Asset::create([
+            'asset_code' => 'LPT-A-001',
+            'name' => 'Laptop Cabang A',
+            'category_id' => $category->id,
+            'location_id' => $locationA->id,
+            'status' => AssetStatus::Available,
+        ]);
+        Asset::create([
+            'asset_code' => 'LPT-B-002',
+            'name' => 'Laptop Cabang B',
+            'category_id' => $category->id,
+            'location_id' => $locationB->id,
+            'status' => AssetStatus::Available,
+        ]);
+
+        $admin = User::factory()->admin()->create(['location_id' => $locationA->id]);
+
+        $this->actingAs($admin)->get(route('web.assets.index'))
+            ->assertOk()
+            ->assertSee('LPT-A-001')
+            ->assertSee('LPT-B-002');
+    }
+
+    public function test_api_asset_reads_are_scoped_to_user_location(): void
+    {
+        Storage::fake('public');
+
+        $locationA = Location::create(['name' => 'Kantor A', 'address' => 'Jl. A No. 1']);
+        $locationB = Location::create(['name' => 'Kantor B', 'address' => 'Jl. B No. 2']);
+        $category = AssetCategory::create(['name' => 'Laptop', 'code' => 'LPT']);
+
+        Asset::create([
+            'asset_code' => 'LPT-A-001',
+            'name' => 'Laptop Cabang A',
+            'category_id' => $category->id,
+            'location_id' => $locationA->id,
+            'status' => AssetStatus::Available,
+        ]);
+        $otherAsset = Asset::create([
+            'asset_code' => 'LPT-B-002',
+            'name' => 'Laptop Cabang B',
+            'category_id' => $category->id,
+            'location_id' => $locationB->id,
+            'status' => AssetStatus::Available,
+        ]);
+
+        Sanctum::actingAs(User::factory()->staff()->create(['location_id' => $locationA->id]));
+
+        $list = $this->getJson('/api/v1/assets')->assertOk();
+        $codes = collect($list->json('data'))->pluck('asset_code')->all();
+        $this->assertSame(['LPT-A-001'], $codes);
+
+        $this->getJson("/api/v1/assets/{$otherAsset->id}")->assertForbidden();
+        $this->getJson('/api/v1/assets/scan?code='.$otherAsset->asset_code)->assertNotFound();
     }
 }

@@ -151,7 +151,7 @@
     </div>
 
     @push('scripts')
-    <script>
+    <script nonce="{{ Vite::cspNonce() }}">
         function qrScanner() {
             return {
                 scanner: null,

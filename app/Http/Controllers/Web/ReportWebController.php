@@ -9,41 +9,49 @@ use App\Models\AssetCategory;
 use App\Models\AssetDisposal;
 use App\Models\Location;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 
 class ReportWebController extends Controller
 {
     public function index(Request $request): View
     {
+        $user = $request->user();
+        $visible = fn (Builder $query): Builder => $query->visibleTo($user);
+
         $locations = Location::query()
             ->withCount([
-                'assets as total_assets',
-                'assets as available_assets' => fn ($q) => $q->where('status', AssetStatus::Available),
-                'assets as deployed_assets' => fn ($q) => $q->where('status', AssetStatus::Deployed),
-                'assets as maintenance_assets' => fn ($q) => $q->where('status', AssetStatus::Maintenance),
+                'assets as total_assets' => $visible,
+                'assets as available_assets' => fn (Builder $q) => $visible($q)->where('status', AssetStatus::Available),
+                'assets as deployed_assets' => fn (Builder $q) => $visible($q)->where('status', AssetStatus::Deployed),
+                'assets as maintenance_assets' => fn (Builder $q) => $visible($q)->where('status', AssetStatus::Maintenance),
             ])
-            ->withSum('assets as total_asset_value', 'purchase_cost')
+            ->withSum(['assets as total_asset_value' => $visible], 'purchase_cost')
             ->get();
 
         $categories = AssetCategory::query()
-            ->withCount('assets')
-            ->withSum('assets as total_value', 'purchase_cost')
+            ->withCount(['assets' => $visible])
+            ->withSum(['assets as total_value' => $visible], 'purchase_cost')
             ->get();
 
         $disposals = AssetDisposal::query()
+            ->whereHas('asset', $visible)
             ->with(['asset.category', 'authorizedBy'])
             ->latest('date')
             ->take(15)
             ->get();
 
-        $totalAssets = Asset::count();
-        $totalValuation = Asset::sum('purchase_cost');
-        $totalInMaintenance = Asset::where('status', AssetStatus::Maintenance)->count();
-        $totalDisposed = Asset::whereIn('status', [AssetStatus::Retired, AssetStatus::Sold, AssetStatus::Disposed])->count();
+        $totalAssets = Asset::query()->visibleTo($user)->count();
+        $totalValuation = Asset::query()->visibleTo($user)->sum('purchase_cost');
+        $totalInMaintenance = Asset::query()->visibleTo($user)->where('status', AssetStatus::Maintenance)->count();
+        $totalDisposed = Asset::query()->visibleTo($user)
+            ->whereIn('status', [AssetStatus::Retired, AssetStatus::Sold, AssetStatus::Disposed])
+            ->count();
 
         $selectedAsset = null;
         if ($request->filled('asset_code')) {
             $selectedAsset = Asset::query()
+                ->visibleTo($user)
                 ->with([
                     'category',
                     'location',

@@ -19,7 +19,7 @@ class AssetWebController extends Controller
 {
     public function index(Request $request): View
     {
-        $query = Asset::query()->with(['category', 'location']);
+        $query = Asset::query()->visibleTo($request->user())->with(['category', 'location']);
         $this->applyCatalogFilters($query, $request);
 
         $assets = $query->latest('id')->paginate(12)->withQueryString();
@@ -106,6 +106,8 @@ class AssetWebController extends Controller
 
     public function edit(Asset $asset): View
     {
+        $this->authorize('update', $asset);
+
         $locations = Location::all();
         $categories = AssetCategory::all();
 
@@ -118,6 +120,8 @@ class AssetWebController extends Controller
 
     public function update(Request $request, Asset $asset): RedirectResponse
     {
+        $this->authorize('update', $asset);
+
         $validated = $request->validate($this->validationRules($asset->id));
 
         if ($request->hasFile('photo')) {
@@ -134,6 +138,8 @@ class AssetWebController extends Controller
 
     public function destroy(Asset $asset): RedirectResponse
     {
+        $this->authorize('delete', $asset);
+
         if ($asset->hasOperationalHistory()) {
             return redirect()->route('web.assets.index')->with('error', 'Aset memiliki riwayat operasional (peminjaman, mutasi, maintenance, atau disposal) sehingga tidak dapat dihapus.');
         }
@@ -152,6 +158,8 @@ class AssetWebController extends Controller
 
     public function show(Asset $asset): View
     {
+        $this->authorize('view', $asset);
+
         $asset->load([
             'category',
             'location',
@@ -177,7 +185,7 @@ class AssetWebController extends Controller
             ->filter()
             ->all();
 
-        $query = Asset::query()->with('location');
+        $query = Asset::query()->visibleTo($request->user())->with('location');
 
         if ($ids !== []) {
             $query->whereIn('id', $ids);
@@ -211,7 +219,9 @@ class AssetWebController extends Controller
         $foundAsset = null;
 
         if ($code !== null && $code !== '') {
-            $foundAsset = Asset::where('asset_code', $code)
+            $foundAsset = Asset::query()
+                ->visibleTo($request->user())
+                ->where('asset_code', $code)
                 ->with(['category', 'location', 'activeAssignment.user'])
                 ->first();
         }
