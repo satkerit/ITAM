@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', $asset->name . ' (' . $asset->asset_code . ')')
 @section('header', 'Detail Informasi Perangkat')

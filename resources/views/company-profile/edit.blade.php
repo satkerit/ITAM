@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', 'Profil Perusahaan')
 @section('header', 'Pengaturan & Profil Perusahaan')

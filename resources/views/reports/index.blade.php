@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', 'Laporan Inventaris & Audit Trail')
 @section('header', 'Laporan Inventaris & Audit Trail')

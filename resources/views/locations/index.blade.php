@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', 'Manajemen Lokasi Cabang')
 @section('header', 'Manajemen Lokasi Cabang & Gedung')
@@ -132,7 +132,7 @@
     </div>
 
     <!-- Modal Edit Lokasi -->
-    <div x-show="openEditModal" x-cloak style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+    <div x-show="openEditModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
         <div @click.away="openEditModal = false" class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4 border border-slate-200">
             <div class="flex items-center justify-between pb-3 border-b border-slate-100">
                 <h3 class="font-bold text-sm text-slate-900">Perbarui Data Lokasi Kantor</h3>

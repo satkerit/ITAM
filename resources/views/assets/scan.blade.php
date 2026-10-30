@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', 'Scan QR Code Aset')
 @section('header', 'Audit Fisik & Pemindai QR Code')

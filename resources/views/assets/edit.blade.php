@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', 'Edit Aset: '.$asset->asset_code)
 @section('header', 'Edit Data Aset')

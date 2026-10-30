@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', 'Registrasi Aset Baru')
 @section('header', 'Registrasi Aset IT Baru')
