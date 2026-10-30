@@ -36,7 +36,7 @@ class WebFrontendFullOperationsTest extends TestCase
         $this->loc1 = Location::create(['name' => 'Kantor Pusat Jakarta', 'address' => 'Jl. Sudirman No 1']);
         $this->loc2 = Location::create(['name' => 'Kantor Cabang Surabaya', 'address' => 'Jl. Basuki Rahmat No 2']);
         $this->category = AssetCategory::create(['name' => 'Laptop', 'code' => 'LPT']);
-        $this->user = User::factory()->create(['location_id' => $this->loc1->id]);
+        $this->user = User::factory()->admin()->create(['location_id' => $this->loc1->id]);
         $this->actingAs($this->user);
 
         $this->asset = Asset::create([

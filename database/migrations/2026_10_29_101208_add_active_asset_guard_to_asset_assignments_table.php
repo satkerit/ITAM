@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -11,11 +12,20 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('asset_assignments', function (Blueprint $table) {
-            $table->unsignedBigInteger('active_asset_id')
-                ->nullable()
-                ->virtualAs("case when status = 'active' then asset_id end")
-                ->unique();
+        // SQLite hanya bisa menambah generated column VIRTUAL lewat ALTER,
+        // sedangkan MariaDB hanya bisa memberi unique index pada column STORED.
+        $usesVirtualColumn = DB::connection()->getDriverName() === 'sqlite';
+
+        Schema::table('asset_assignments', function (Blueprint $table) use ($usesVirtualColumn): void {
+            $expression = "case when status = 'active' then asset_id end";
+
+            $column = $table->unsignedBigInteger('active_asset_id')->nullable();
+
+            $usesVirtualColumn
+                ? $column->virtualAs($expression)
+                : $column->storedAs($expression);
+
+            $column->unique();
         });
     }
 

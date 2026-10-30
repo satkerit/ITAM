@@ -24,7 +24,7 @@ class UpdateAssetRequest extends FormRequest
         $assetId = is_object($asset) ? $asset->id : $asset;
 
         return [
-            'asset_code' => ['sometimes', 'required', 'string', 'max:100', Rule::unique('assets', 'asset_code')->ignore($assetId)],
+            'asset_code' => ['sometimes', 'required', 'string', 'max:100', 'regex:/^[A-Za-z0-9._-]+$/', Rule::unique('assets', 'asset_code')->ignore($assetId)],
             'category_id' => ['sometimes', 'required', 'integer', 'exists:asset_categories,id'],
             'location_id' => ['sometimes', 'required', 'integer', 'exists:locations,id'],
             'name' => ['sometimes', 'required', 'string', 'max:255'],

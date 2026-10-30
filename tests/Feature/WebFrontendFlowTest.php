@@ -17,7 +17,7 @@ class WebFrontendFlowTest extends TestCase
     {
         $location = Location::create(['name' => 'Kantor Pusat', 'address' => 'Jl. Sudirman']);
         $category = AssetCategory::create(['name' => 'Laptop', 'code' => 'LPT']);
-        $user = User::factory()->create(['location_id' => $location->id]);
+        $user = User::factory()->technician()->create(['location_id' => $location->id]);
 
         $this->actingAs($user);
 

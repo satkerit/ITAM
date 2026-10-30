@@ -74,7 +74,7 @@ class AssetWebController extends Controller
     private function validationRules(?int $assetId = null): array
     {
         return [
-            'asset_code' => ['required', 'string', 'max:100', 'unique:assets,asset_code'.($assetId ? ','.$assetId : '')],
+            'asset_code' => ['required', 'string', 'max:100', 'regex:/^[A-Za-z0-9._-]+$/', 'unique:assets,asset_code'.($assetId ? ','.$assetId : '')],
             'name' => ['required', 'string', 'max:255'],
             'category_id' => ['required', 'exists:asset_categories,id'],
             'location_id' => ['required', 'exists:locations,id'],
@@ -258,7 +258,9 @@ class AssetWebController extends Controller
             $categoryId = $categories[strtoupper(trim((string) ($row['category_code'] ?? '')))] ?? null;
             $locationId = $locations[trim((string) ($row['location_name'] ?? ''))] ?? $defaultLocationId;
 
-            if ($assetCode === '' || $name === '' || $categoryId === null || $locationId === null || Asset::where('asset_code', $assetCode)->exists()) {
+            if ($assetCode === '' || $name === '' || $categoryId === null || $locationId === null
+                || preg_match('/^[A-Za-z0-9._-]+$/', $assetCode) !== 1
+                || Asset::where('asset_code', $assetCode)->exists()) {
                 $skipped++;
 
                 continue;

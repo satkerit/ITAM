@@ -20,7 +20,7 @@ class AssetApiTest extends TestCase
     {
         parent::setUp();
 
-        Sanctum::actingAs(User::factory()->create());
+        Sanctum::actingAs(User::factory()->admin()->create());
     }
 
     public function test_can_create_asset_with_json_spec_and_generate_qr(): void

@@ -18,7 +18,7 @@ class AssetImportDepreciationTest extends TestCase
     {
         parent::setUp();
 
-        $admin = User::factory()->create();
+        $admin = User::factory()->admin()->create();
         $this->actingAs($admin);
     }
 

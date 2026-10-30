@@ -16,7 +16,7 @@ class MasterDataApiTest extends TestCase
     {
         parent::setUp();
 
-        Sanctum::actingAs(User::factory()->create());
+        Sanctum::actingAs(User::factory()->admin()->create());
     }
 
     public function test_can_create_and_list_locations(): void

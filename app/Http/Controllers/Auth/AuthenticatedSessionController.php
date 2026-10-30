@@ -7,6 +7,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -53,6 +54,13 @@ class AuthenticatedSessionController extends Controller
 
         if (! Auth::attempt($credentials, $remember)) {
             RateLimiter::hit($throttleKey, 60);
+
+            // OWASP A09: catat kegagalan autentikasi tanpa menyimpan kredensial.
+            Log::warning('Percobaan login gagal.', [
+                'email' => $credentials['email'],
+                'ip' => $request->ip(),
+                'user_agent' => Str::limit((string) $request->userAgent(), 255),
+            ]);
 
             throw ValidationException::withMessages([
                 'email' => trans('auth.failed'),

@@ -20,7 +20,7 @@ class StoreAssetRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'asset_code' => ['required', 'string', 'max:100', 'unique:assets,asset_code'],
+            'asset_code' => ['required', 'string', 'max:100', 'regex:/^[A-Za-z0-9._-]+$/', 'unique:assets,asset_code'],
             'category_id' => ['required', 'integer', 'exists:asset_categories,id'],
             'location_id' => ['required', 'integer', 'exists:locations,id'],
             'name' => ['required', 'string', 'max:255'],

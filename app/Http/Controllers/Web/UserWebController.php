@@ -70,11 +70,21 @@ class UserWebController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:users,email,'.$user->id],
+            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->getKey())],
             'password' => ['nullable', 'string', 'min:8'],
             'role' => ['required', Rule::enum(UserRole::class)],
             'location_id' => ['nullable', 'exists:locations,id'],
         ]);
+
+        if ($request->user()->is($user) && $user->role->value !== $validated['role']) {
+            return redirect()->route('web.users.index')->with('error', 'Anda tidak dapat mengubah peran akun sendiri.');
+        }
+
+        if ($user->role === UserRole::Admin
+            && $validated['role'] !== UserRole::Admin->value
+            && $this->isLastAdmin($user)) {
+            return redirect()->route('web.users.index')->with('error', 'Gagal memperbarui: minimal harus ada satu administrator aktif.');
+        }
 
         $payload = [
             'name' => $validated['name'],
@@ -92,8 +102,16 @@ class UserWebController extends Controller
         return redirect()->route('web.users.index')->with('success', 'Data pengguna berhasil diperbarui!');
     }
 
-    public function destroy(User $user): RedirectResponse
+    public function destroy(Request $request, User $user): RedirectResponse
     {
+        if ($request->user()->is($user)) {
+            return redirect()->route('web.users.index')->with('error', 'Gagal menghapus: Anda tidak dapat menghapus akun sendiri.');
+        }
+
+        if ($user->role === UserRole::Admin && $this->isLastAdmin($user)) {
+            return redirect()->route('web.users.index')->with('error', 'Gagal menghapus: minimal harus ada satu administrator aktif.');
+        }
+
         if ($user->assignments()->where('status', AssignmentStatus::Active)->exists()) {
             return redirect()->route('web.users.index')->with('error', 'Gagal menghapus: Pengguna masih memiliki peminjaman unit aset aktif.');
         }
@@ -101,5 +119,13 @@ class UserWebController extends Controller
         $user->delete();
 
         return redirect()->route('web.users.index')->with('success', 'Pengguna berhasil dihapus.');
+    }
+
+    private function isLastAdmin(User $user): bool
+    {
+        return User::query()
+            ->where('role', UserRole::Admin)
+            ->whereKeyNot($user->getKey())
+            ->doesntExist();
     }
 }

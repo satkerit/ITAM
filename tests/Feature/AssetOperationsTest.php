@@ -33,7 +33,7 @@ class AssetOperationsTest extends TestCase
         $this->locationA = Location::create(['name' => 'Kantor Jakarta', 'address' => 'Jl. Sudirman']);
         $this->locationB = Location::create(['name' => 'Kantor Bandung', 'address' => 'Jl. Asia Afrika']);
         $this->category = AssetCategory::create(['name' => 'Laptop', 'code' => 'LPT']);
-        $this->user = User::factory()->create(['location_id' => $this->locationA->id]);
+        $this->user = User::factory()->admin()->create(['location_id' => $this->locationA->id]);
 
         Sanctum::actingAs($this->user);
     }

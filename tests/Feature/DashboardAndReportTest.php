@@ -33,7 +33,7 @@ class DashboardAndReportTest extends TestCase
         $this->locJakarta = Location::create(['name' => 'Jakarta Hub', 'address' => 'Sudirman']);
         $this->locSurabaya = Location::create(['name' => 'Surabaya Hub', 'address' => 'Pemuda']);
         $this->catLaptop = AssetCategory::create(['name' => 'Laptop', 'code' => 'LPT']);
-        $this->user = User::factory()->create();
+        $this->user = User::factory()->admin()->create();
 
         Sanctum::actingAs($this->user);
 

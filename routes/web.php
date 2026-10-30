@@ -30,62 +30,68 @@ Route::prefix('app')->name('web.')->middleware('auth')->group(function () {
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    // Manajemen Aset (Katalog, Registrasi, QR Code, Scan)
+    // Manajemen Aset — baca (semua role)
     Route::get('/assets/scan', [AssetWebController::class, 'scan'])->name('assets.scan');
-    Route::get('/assets/import/template', [AssetWebController::class, 'downloadTemplate'])->name('assets.template');
-    Route::post('/assets/import', [AssetWebController::class, 'import'])->name('assets.import');
     Route::get('/assets/print', [AssetWebController::class, 'printLabels'])->name('assets.print');
     Route::get('/assets', [AssetWebController::class, 'index'])->name('assets.index');
-    Route::get('/assets/create', [AssetWebController::class, 'create'])->name('assets.create');
-    Route::post('/assets', [AssetWebController::class, 'store'])->name('assets.store');
-    Route::get('/assets/{asset}/edit', [AssetWebController::class, 'edit'])->name('assets.edit');
-    Route::put('/assets/{asset}', [AssetWebController::class, 'update'])->name('assets.update');
-    Route::delete('/assets/{asset}', [AssetWebController::class, 'destroy'])->name('assets.destroy');
+
+    // Manajemen Aset — tulis (admin & teknisi)
+    Route::middleware('role:admin,technician')->group(function () {
+        Route::get('/assets/import/template', [AssetWebController::class, 'downloadTemplate'])->name('assets.template');
+        Route::post('/assets/import', [AssetWebController::class, 'import'])->name('assets.import');
+        Route::get('/assets/create', [AssetWebController::class, 'create'])->name('assets.create');
+        Route::post('/assets', [AssetWebController::class, 'store'])->name('assets.store');
+        Route::get('/assets/{asset}/edit', [AssetWebController::class, 'edit'])->name('assets.edit');
+        Route::put('/assets/{asset}', [AssetWebController::class, 'update'])->name('assets.update');
+        Route::delete('/assets/{asset}', [AssetWebController::class, 'destroy'])->name('assets.destroy');
+    });
+
+    // Detail aset — semua role, didaftarkan setelah seluruh route statis aset
     Route::get('/assets/{asset}', [AssetWebController::class, 'show'])->name('assets.show');
 
-    // Operasional: Penugasan (Check-out & Check-in)
+    // Operasional — baca (semua role)
     Route::get('/assignments', [OperationWebController::class, 'assignmentsIndex'])->name('assignments.index');
-    Route::post('/assignments', [OperationWebController::class, 'assignmentsStore'])->name('assignments.store');
-    Route::post('/assignments/{assignment}/checkin', [OperationWebController::class, 'assignmentsCheckin'])->name('assignments.checkin');
-
-    // Operasional: Mutasi Antar Lokasi
     Route::get('/mutations', [OperationWebController::class, 'mutationsIndex'])->name('mutations.index');
-    Route::post('/mutations', [OperationWebController::class, 'mutationsStore'])->name('mutations.store');
-
-    // Operasional: Servis & Maintenance
     Route::get('/maintenances', [OperationWebController::class, 'maintenancesIndex'])->name('maintenances.index');
-    Route::post('/maintenances', [OperationWebController::class, 'maintenancesStore'])->name('maintenances.store');
-    Route::post('/maintenances/{maintenance}/complete', [OperationWebController::class, 'maintenancesComplete'])->name('maintenances.complete');
-
-    // Operasional: Disposal (Sale & Scrap)
     Route::get('/disposals', [OperationWebController::class, 'disposalsIndex'])->name('disposals.index');
-    Route::post('/disposals', [OperationWebController::class, 'disposalsStore'])->name('disposals.store');
 
-    // Laporan & Audit
+    // Operasional — tulis (admin & teknisi)
+    Route::middleware('role:admin,technician')->group(function () {
+        Route::post('/assignments', [OperationWebController::class, 'assignmentsStore'])->name('assignments.store');
+        Route::post('/assignments/{assignment}/checkin', [OperationWebController::class, 'assignmentsCheckin'])->name('assignments.checkin');
+        Route::post('/mutations', [OperationWebController::class, 'mutationsStore'])->name('mutations.store');
+        Route::post('/maintenances', [OperationWebController::class, 'maintenancesStore'])->name('maintenances.store');
+        Route::post('/maintenances/{maintenance}/complete', [OperationWebController::class, 'maintenancesComplete'])->name('maintenances.complete');
+        Route::post('/disposals', [OperationWebController::class, 'disposalsStore'])->name('disposals.store');
+    });
+
+    // Laporan & Audit (semua role)
     Route::get('/reports', [ReportWebController::class, 'index'])->name('reports.index');
 
-    // Master Data & RBAC
-    // Manajemen Lokasi Cabang
-    Route::get('/locations', [LocationWebController::class, 'index'])->name('locations.index');
-    Route::post('/locations', [LocationWebController::class, 'store'])->name('locations.store');
-    Route::put('/locations/{location}', [LocationWebController::class, 'update'])->name('locations.update');
-    Route::delete('/locations/{location}', [LocationWebController::class, 'destroy'])->name('locations.destroy');
+    // Master Data & RBAC — khusus admin
+    Route::middleware('role:admin')->group(function () {
+        // Manajemen Lokasi Cabang
+        Route::get('/locations', [LocationWebController::class, 'index'])->name('locations.index');
+        Route::post('/locations', [LocationWebController::class, 'store'])->name('locations.store');
+        Route::put('/locations/{location}', [LocationWebController::class, 'update'])->name('locations.update');
+        Route::delete('/locations/{location}', [LocationWebController::class, 'destroy'])->name('locations.destroy');
 
-    // Manajemen Kategori Aset
-    Route::get('/categories', [AssetCategoryWebController::class, 'index'])->name('categories.index');
-    Route::get('/categories/import/template', [AssetCategoryWebController::class, 'downloadTemplate'])->name('categories.template');
-    Route::post('/categories/import', [AssetCategoryWebController::class, 'import'])->name('categories.import');
-    Route::post('/categories', [AssetCategoryWebController::class, 'store'])->name('categories.store');
-    Route::put('/categories/{category}', [AssetCategoryWebController::class, 'update'])->name('categories.update');
-    Route::delete('/categories/{category}', [AssetCategoryWebController::class, 'destroy'])->name('categories.destroy');
+        // Manajemen Kategori Aset
+        Route::get('/categories', [AssetCategoryWebController::class, 'index'])->name('categories.index');
+        Route::get('/categories/import/template', [AssetCategoryWebController::class, 'downloadTemplate'])->name('categories.template');
+        Route::post('/categories/import', [AssetCategoryWebController::class, 'import'])->name('categories.import');
+        Route::post('/categories', [AssetCategoryWebController::class, 'store'])->name('categories.store');
+        Route::put('/categories/{category}', [AssetCategoryWebController::class, 'update'])->name('categories.update');
+        Route::delete('/categories/{category}', [AssetCategoryWebController::class, 'destroy'])->name('categories.destroy');
 
-    // Manajemen User & Role (RBAC)
-    Route::get('/users', [UserWebController::class, 'index'])->name('users.index');
-    Route::post('/users', [UserWebController::class, 'store'])->name('users.store');
-    Route::put('/users/{user}', [UserWebController::class, 'update'])->name('users.update');
-    Route::delete('/users/{user}', [UserWebController::class, 'destroy'])->name('users.destroy');
+        // Manajemen User & Role (RBAC)
+        Route::get('/users', [UserWebController::class, 'index'])->name('users.index');
+        Route::post('/users', [UserWebController::class, 'store'])->name('users.store');
+        Route::put('/users/{user}', [UserWebController::class, 'update'])->name('users.update');
+        Route::delete('/users/{user}', [UserWebController::class, 'destroy'])->name('users.destroy');
 
-    // Profil Perusahaan (Identitas Korporasi, Logo & Kantor)
-    Route::get('/company-profile', [CompanyProfileWebController::class, 'edit'])->name('company.edit');
-    Route::put('/company-profile', [CompanyProfileWebController::class, 'update'])->name('company.update');
+        // Profil Perusahaan (Identitas Korporasi, Logo & Kantor)
+        Route::get('/company-profile', [CompanyProfileWebController::class, 'edit'])->name('company.edit');
+        Route::put('/company-profile', [CompanyProfileWebController::class, 'update'])->name('company.update');
+    });
 });

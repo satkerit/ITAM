@@ -17,29 +17,43 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:sanctum');
 
 Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
-    Route::apiResource('locations', LocationController::class);
-    Route::apiResource('asset-categories', AssetCategoryController::class);
+    // Master data — baca untuk semua, tulis khusus admin
+    Route::apiResource('locations', LocationController::class)->only(['index', 'show']);
+    Route::apiResource('asset-categories', AssetCategoryController::class)->only(['index', 'show']);
 
+    // Aset — baca (semua role)
     Route::get('assets/scan', [AssetController::class, 'scan'])->name('assets.scan');
     Route::get('assets/{asset}/qr', [AssetController::class, 'qrImage'])->name('assets.qr');
-    Route::apiResource('assets', AssetController::class);
+    Route::apiResource('assets', AssetController::class)->only(['index', 'show']);
 
+    // Operasional & laporan — baca (semua role)
     Route::get('assignments', [AssetAssignmentController::class, 'index'])->name('assignments.index');
-    Route::post('assignments/assign', [AssetAssignmentController::class, 'assign'])->name('assignments.assign');
-    Route::post('assignments/{assignment}/return', [AssetAssignmentController::class, 'return'])->name('assignments.return');
-
     Route::get('mutations', [AssetMutationController::class, 'index'])->name('mutations.index');
-    Route::post('mutations', [AssetMutationController::class, 'store'])->name('mutations.store');
-
     Route::get('maintenances', [MaintenanceLogController::class, 'index'])->name('maintenances.index');
-    Route::post('maintenances', [MaintenanceLogController::class, 'store'])->name('maintenances.store');
-    Route::post('maintenances/{maintenance}/complete', [MaintenanceLogController::class, 'complete'])->name('maintenances.complete');
-
     Route::get('disposals', [AssetDisposalController::class, 'index'])->name('disposals.index');
-    Route::post('disposals', [AssetDisposalController::class, 'store'])->name('disposals.store');
-
     Route::get('dashboard/summary', [DashboardController::class, 'summary'])->name('dashboard.summary');
     Route::get('reports/stock-by-location', [ReportController::class, 'stockByLocation'])->name('reports.stock');
     Route::get('reports/assets/{asset}/history', [ReportController::class, 'assetHistory'])->name('reports.history');
     Route::get('reports/disposals', [ReportController::class, 'disposals'])->name('reports.disposals');
+
+    // Master data — tulis (admin)
+    Route::middleware('role:admin')->group(function () {
+        Route::apiResource('locations', LocationController::class)->only(['store', 'update', 'destroy']);
+        Route::apiResource('asset-categories', AssetCategoryController::class)->only(['store', 'update', 'destroy']);
+    });
+
+    // Aset & operasional — tulis (admin & teknisi)
+    Route::middleware('role:admin,technician')->group(function () {
+        Route::apiResource('assets', AssetController::class)->only(['store', 'update', 'destroy']);
+
+        Route::post('assignments/assign', [AssetAssignmentController::class, 'assign'])->name('assignments.assign');
+        Route::post('assignments/{assignment}/return', [AssetAssignmentController::class, 'return'])->name('assignments.return');
+
+        Route::post('mutations', [AssetMutationController::class, 'store'])->name('mutations.store');
+
+        Route::post('maintenances', [MaintenanceLogController::class, 'store'])->name('maintenances.store');
+        Route::post('maintenances/{maintenance}/complete', [MaintenanceLogController::class, 'complete'])->name('maintenances.complete');
+
+        Route::post('disposals', [AssetDisposalController::class, 'store'])->name('disposals.store');
+    });
 });
