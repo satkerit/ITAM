@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Cetak Label QR Aset</title>
-    <style>
+    <style nonce="{{ Vite::cspNonce() }}">
         * { box-sizing: border-box; }
         body { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; margin: 0; padding: 24px; color: #0f172a; background: #f8fafc; }
         .toolbar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; margin-bottom: 24px; }

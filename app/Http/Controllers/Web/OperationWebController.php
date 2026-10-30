@@ -20,14 +20,18 @@ class OperationWebController extends Controller
 {
     // ==================== ASSIGNMENTS ====================
 
-    public function assignmentsIndex(): View
+    public function assignmentsIndex(Request $request): View
     {
+        $visible = fn ($query) => $query->visibleTo($request->user());
+
         $assignments = AssetAssignment::query()
+            ->whereHas('asset', $visible)
             ->with(['asset', 'user', 'assignedBy'])
             ->latest('id')
             ->paginate(15);
 
         $availableAssets = Asset::query()
+            ->visibleTo($request->user())
             ->where('status', AssetStatus::Available->value)
             ->get();
 
@@ -49,6 +53,8 @@ class OperationWebController extends Controller
             'notes' => ['nullable', 'string'],
         ]);
 
+        $this->authorize('update', Asset::findOrFail($validated['asset_id']));
+
         $operations->assign($validated['asset_id'], $validated, $request->user()->id);
 
         return redirect()->route('web.assignments.index')->with('success', 'Penugasan aset (Check-out) berhasil disimpan!');
@@ -61,6 +67,8 @@ class OperationWebController extends Controller
             'notes' => ['nullable', 'string'],
         ]);
 
+        $this->authorize('update', $assignment->asset);
+
         $operations->checkIn($assignment, $validated);
 
         return redirect()->route('web.assignments.index')->with('success', 'Pengembalian aset (Check-in) berhasil dicatat!');
@@ -68,14 +76,16 @@ class OperationWebController extends Controller
 
     // ==================== MUTATIONS ====================
 
-    public function mutationsIndex(): View
+    public function mutationsIndex(Request $request): View
     {
         $mutations = AssetMutation::query()
+            ->whereHas('asset', fn ($query) => $query->visibleTo($request->user()))
             ->with(['asset', 'fromLocation', 'toLocation', 'processedBy'])
             ->latest('id')
             ->paginate(15);
 
         $assets = Asset::query()
+            ->visibleTo($request->user())
             ->whereNotIn('status', [AssetStatus::Disposed->value, AssetStatus::Sold->value])
             ->get();
 
@@ -98,6 +108,8 @@ class OperationWebController extends Controller
             'notes' => ['nullable', 'string'],
         ]);
 
+        $this->authorize('update', Asset::findOrFail($validated['asset_id']));
+
         $operations->mutate($validated['asset_id'], $validated, $request->user()->id);
 
         return redirect()->route('web.mutations.index')->with('success', 'Mutasi lokasi aset berhasil diproses!');
@@ -105,14 +117,16 @@ class OperationWebController extends Controller
 
     // ==================== MAINTENANCES ====================
 
-    public function maintenancesIndex(): View
+    public function maintenancesIndex(Request $request): View
     {
         $maintenances = MaintenanceLog::query()
+            ->whereHas('asset', fn ($query) => $query->visibleTo($request->user()))
             ->with(['asset', 'performedBy'])
             ->latest('id')
             ->paginate(15);
 
         $assets = Asset::query()
+            ->visibleTo($request->user())
             ->whereNotIn('status', [AssetStatus::Disposed->value, AssetStatus::Sold->value])
             ->get();
 
@@ -134,6 +148,8 @@ class OperationWebController extends Controller
             'vendor' => ['nullable', 'string', 'max:255'],
         ]);
 
+        $this->authorize('update', Asset::findOrFail($validated['asset_id']));
+
         $operations->recordMaintenance($validated['asset_id'], [
             'maintenance_date' => $validated['service_date'],
             'description' => $validated['issue_description'],
@@ -153,6 +169,8 @@ class OperationWebController extends Controller
             'cost' => ['nullable', 'numeric', 'min:0'],
         ]);
 
+        $this->authorize('update', $maintenance->asset);
+
         $operations->completeMaintenance($maintenance, [
             'completed_date' => $validated['completion_date'],
             'cost' => $validated['cost'] ?? null,
@@ -163,14 +181,16 @@ class OperationWebController extends Controller
 
     // ==================== DISPOSALS ====================
 
-    public function disposalsIndex(): View
+    public function disposalsIndex(Request $request): View
     {
         $disposals = AssetDisposal::query()
+            ->whereHas('asset', fn ($query) => $query->visibleTo($request->user()))
             ->with(['asset', 'authorizedBy'])
             ->latest('id')
             ->paginate(15);
 
         $eligibleAssets = Asset::query()
+            ->visibleTo($request->user())
             ->whereNotIn('status', [AssetStatus::Deployed->value, AssetStatus::Disposed->value, AssetStatus::Sold->value])
             ->get();
 
@@ -190,6 +210,8 @@ class OperationWebController extends Controller
             'reason' => ['required', 'string', 'max:255'],
             'notes' => ['nullable', 'string'],
         ]);
+
+        $this->authorize('update', Asset::findOrFail($validated['asset_id']));
 
         $operations->dispose($validated['asset_id'], [
             'disposal_type' => $validated['disposal_type'],

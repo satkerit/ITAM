@@ -141,7 +141,7 @@
     </div>
 
     <!-- Modal Import CSV -->
-    <div x-show="openImport" x-cloak style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+    <div x-show="openImport" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
         <div @click.away="openImport = false" class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4 border border-slate-200">
             <div class="flex items-center justify-between pb-3 border-b border-slate-100">
                 <h3 class="font-bold text-sm text-slate-900">Impor Aset dari CSV</h3>

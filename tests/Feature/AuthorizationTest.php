@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Enums\AssetStatus;
 use App\Enums\UserRole;
 use App\Models\Asset;
+use App\Models\AssetAssignment;
 use App\Models\AssetCategory;
 use App\Models\Location;
 use App\Models\User;
@@ -246,5 +247,136 @@ class AuthorizationTest extends TestCase
 
         $this->getJson("/api/v1/assets/{$otherAsset->id}")->assertForbidden();
         $this->getJson('/api/v1/assets/scan?code='.$otherAsset->asset_code)->assertNotFound();
+    }
+
+    public function test_operational_lists_are_scoped_to_user_location(): void
+    {
+        [$locationA, $locationB, $assetA, $assetB] = $this->seedTwoBranchAssets();
+
+        $owner = User::factory()->staff()->create();
+        $admin = User::factory()->admin()->create();
+
+        AssetAssignment::create([
+            'asset_id' => $assetA->id,
+            'user_id' => $owner->id,
+            'assigned_date' => now()->toDateString(),
+            'status' => 'active',
+            'assigned_by' => $admin->id,
+        ]);
+        AssetAssignment::create([
+            'asset_id' => $assetB->id,
+            'user_id' => $owner->id,
+            'assigned_date' => now()->toDateString(),
+            'status' => 'active',
+            'assigned_by' => $admin->id,
+        ]);
+
+        $staff = User::factory()->staff()->create(['location_id' => $locationA->id]);
+
+        $this->actingAs($staff)->get(route('web.assignments.index'))
+            ->assertOk()
+            ->assertSee($assetA->asset_code)
+            ->assertDontSee($assetB->asset_code);
+
+        Sanctum::actingAs($staff);
+
+        $assignments = collect($this->getJson('/api/v1/assignments')->assertOk()->json('data'))
+            ->pluck('asset.asset_code')
+            ->all();
+        $this->assertSame([$assetA->asset_code], $assignments);
+
+        $stock = collect($this->getJson('/api/v1/reports/stock-by-location')->assertOk()->json('data'))
+            ->pluck('assets_count', 'name')
+            ->all();
+        $this->assertSame(1, (int) $stock[$locationA->name]);
+        $this->assertSame(0, (int) $stock[$locationB->name]);
+    }
+
+    public function test_technician_cannot_operate_assets_outside_their_location(): void
+    {
+        [$locationA, $locationB, $assetA, $assetB] = $this->seedTwoBranchAssets();
+
+        $technician = User::factory()->technician()->create(['location_id' => $locationA->id]);
+        $borrower = User::factory()->staff()->create(['location_id' => $locationA->id]);
+
+        Sanctum::actingAs($technician);
+
+        $this->postJson('/api/v1/assignments/assign', [
+            'asset_id' => $assetB->id,
+            'user_id' => $borrower->id,
+            'assigned_date' => now()->toDateString(),
+        ])->assertForbidden();
+
+        $this->postJson('/api/v1/mutations', [
+            'asset_id' => $assetB->id,
+            'to_location_id' => $locationA->id,
+            'mutation_date' => now()->toDateString(),
+            'reason' => 'Uji lintas cabang',
+        ])->assertForbidden();
+
+        $this->postJson('/api/v1/maintenances', [
+            'asset_id' => $assetB->id,
+            'maintenance_date' => now()->toDateString(),
+            'description' => 'Uji lintas cabang',
+        ])->assertForbidden();
+
+        $this->postJson('/api/v1/disposals', [
+            'asset_id' => $assetB->id,
+            'disposal_type' => 'disposal',
+            'date' => now()->toDateString(),
+        ])->assertForbidden();
+
+        $this->actingAs($technician)->post(route('web.assignments.store'), [
+            'asset_id' => $assetB->id,
+            'user_id' => $borrower->id,
+            'assigned_date' => now()->toDateString(),
+        ])->assertForbidden();
+
+        $this->actingAs($technician)->post(route('web.assignments.store'), [
+            'asset_id' => $assetA->id,
+            'user_id' => $borrower->id,
+            'assigned_date' => now()->toDateString(),
+        ])->assertRedirect(route('web.assignments.index'));
+    }
+
+    public function test_api_asset_history_requires_location_access(): void
+    {
+        [, , $assetA, $assetB] = $this->seedTwoBranchAssets();
+
+        $staffA = User::factory()->staff()->create(['location_id' => $assetA->location_id]);
+
+        Sanctum::actingAs($staffA);
+
+        $this->getJson("/api/v1/reports/assets/{$assetA->id}/history")->assertOk();
+        $this->getJson("/api/v1/reports/assets/{$assetB->id}/history")->assertForbidden();
+    }
+
+    /**
+     * @return array{0: Location, 1: Location, 2: Asset, 3: Asset}
+     */
+    private function seedTwoBranchAssets(): array
+    {
+        Storage::fake('public');
+
+        $locationA = Location::create(['name' => 'Kantor A', 'address' => 'Jl. A No. 1']);
+        $locationB = Location::create(['name' => 'Kantor B', 'address' => 'Jl. B No. 2']);
+        $category = AssetCategory::create(['name' => 'Laptop', 'code' => 'LPT']);
+
+        $assetA = Asset::create([
+            'asset_code' => 'LPT-A-001',
+            'name' => 'Laptop Cabang A',
+            'category_id' => $category->id,
+            'location_id' => $locationA->id,
+            'status' => AssetStatus::Available,
+        ]);
+        $assetB = Asset::create([
+            'asset_code' => 'LPT-B-002',
+            'name' => 'Laptop Cabang B',
+            'category_id' => $category->id,
+            'location_id' => $locationB->id,
+            'status' => AssetStatus::Available,
+        ]);
+
+        return [$locationA, $locationB, $assetA, $assetB];
     }
 }

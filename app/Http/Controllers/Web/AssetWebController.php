@@ -8,11 +8,15 @@ use App\Http\Requests\Asset\ScanAssetRequest;
 use App\Models\Asset;
 use App\Models\AssetCategory;
 use App\Models\Location;
+use App\Models\User;
+use App\Services\AssetCsvImporter;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AssetWebController extends Controller
@@ -23,14 +27,26 @@ class AssetWebController extends Controller
         $this->applyCatalogFilters($query, $request);
 
         $assets = $query->latest('id')->paginate(12)->withQueryString();
-        $locations = Location::all();
-        $categories = AssetCategory::all();
 
         return view('assets.index', [
             'assets' => $assets,
-            'locations' => $locations,
-            'categories' => $categories,
+            'locations' => $this->availableLocations($request->user()),
+            'categories' => AssetCategory::all(),
         ]);
+    }
+
+    /**
+     * Daftar lokasi yang boleh dipilih pengguna sesuai cakupan lokasinya.
+     *
+     * @return Collection<int, Location>
+     */
+    private function availableLocations(?User $user): Collection
+    {
+        $visibleLocationId = $user?->visibleLocationId();
+
+        return Location::query()
+            ->when($visibleLocationId !== null, fn (Builder $query) => $query->whereKey($visibleLocationId))
+            ->get();
     }
 
     /**
@@ -60,24 +76,25 @@ class AssetWebController extends Controller
         }
     }
 
-    public function create(): View
+    public function create(Request $request): View
     {
-        $locations = Location::all();
-        $categories = AssetCategory::all();
-
         return view('assets.create', [
-            'locations' => $locations,
-            'categories' => $categories,
+            'locations' => $this->availableLocations($request->user()),
+            'categories' => AssetCategory::all(),
         ]);
     }
 
-    private function validationRules(?int $assetId = null): array
+    private function validationRules(?int $assetId = null, ?User $user = null): array
     {
+        $visibleLocationId = $user?->visibleLocationId();
+
         return [
             'asset_code' => ['required', 'string', 'max:100', 'regex:/^[A-Za-z0-9._-]+$/', 'unique:assets,asset_code'.($assetId ? ','.$assetId : '')],
             'name' => ['required', 'string', 'max:255'],
             'category_id' => ['required', 'exists:asset_categories,id'],
-            'location_id' => ['required', 'exists:locations,id'],
+            'location_id' => $visibleLocationId === null
+                ? ['required', 'exists:locations,id']
+                : ['required', Rule::exists('locations', 'id')->where('id', $visibleLocationId)],
             'serial_number' => ['nullable', 'string', 'max:255'],
             'purchase_date' => ['nullable', 'date'],
             'purchase_cost' => ['nullable', 'numeric', 'min:0'],
@@ -93,7 +110,7 @@ class AssetWebController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $validated = $request->validate($this->validationRules());
+        $validated = $request->validate($this->validationRules(null, $request->user()));
 
         if ($request->hasFile('photo')) {
             $validated['photo_path'] = $request->file('photo')->store('asset-photos', 'public');
@@ -104,17 +121,14 @@ class AssetWebController extends Controller
         return redirect()->route('web.assets.show', $asset)->with('success', 'Aset baru berhasil didaftarkan dan QR Code telah diterbitkan!');
     }
 
-    public function edit(Asset $asset): View
+    public function edit(Request $request, Asset $asset): View
     {
         $this->authorize('update', $asset);
 
-        $locations = Location::all();
-        $categories = AssetCategory::all();
-
         return view('assets.edit', [
             'asset' => $asset,
-            'locations' => $locations,
-            'categories' => $categories,
+            'locations' => $this->availableLocations($request->user()),
+            'categories' => AssetCategory::all(),
         ]);
     }
 
@@ -122,7 +136,7 @@ class AssetWebController extends Controller
     {
         $this->authorize('update', $asset);
 
-        $validated = $request->validate($this->validationRules($asset->id));
+        $validated = $request->validate($this->validationRules($asset->id, $request->user()));
 
         if ($request->hasFile('photo')) {
             if ($asset->photo_path) {
@@ -248,95 +262,18 @@ class AssetWebController extends Controller
     /**
      * Impor data aset dari file CSV.
      */
-    public function import(Request $request): RedirectResponse
+    public function import(Request $request, AssetCsvImporter $importer): RedirectResponse
     {
         $request->validate([
             'file' => ['required', 'file', 'mimes:csv,txt', 'max:4096'],
         ]);
 
-        $categories = AssetCategory::pluck('id', 'code')->mapWithKeys(fn ($id, $code) => [strtoupper($code) => $id]);
-        $locations = Location::pluck('id', 'name');
-        $defaultLocationId = Location::query()->value('id');
-
-        $rows = $this->parseCsv($request->file('file')->getRealPath());
-        $created = 0;
-        $skipped = 0;
-
-        foreach ($rows as $row) {
-            $assetCode = trim((string) ($row['asset_code'] ?? ''));
-            $name = trim((string) ($row['name'] ?? ''));
-            $categoryId = $categories[strtoupper(trim((string) ($row['category_code'] ?? '')))] ?? null;
-            $locationId = $locations[trim((string) ($row['location_name'] ?? ''))] ?? $defaultLocationId;
-
-            if ($assetCode === '' || $name === '' || $categoryId === null || $locationId === null
-                || preg_match('/^[A-Za-z0-9._-]+$/', $assetCode) !== 1
-                || Asset::where('asset_code', $assetCode)->exists()) {
-                $skipped++;
-
-                continue;
-            }
-
-            $purchaseDate = trim((string) ($row['purchase_date'] ?? ''));
-            $status = strtolower(trim((string) ($row['status'] ?? ''))) ?: AssetStatus::Available->value;
-
-            if ($purchaseDate !== '' && strtotime($purchaseDate) === false) {
-                $skipped++;
-
-                continue;
-            }
-
-            if (! in_array($status, array_column(AssetStatus::cases(), 'value'), true)) {
-                $skipped++;
-
-                continue;
-            }
-
-            Asset::create([
-                'asset_code' => $assetCode,
-                'name' => $name,
-                'category_id' => $categoryId,
-                'location_id' => $locationId,
-                'serial_number' => trim((string) ($row['serial_number'] ?? '')) ?: null,
-                'purchase_date' => $purchaseDate !== '' ? $purchaseDate : null,
-                'purchase_cost' => is_numeric($row['purchase_cost'] ?? null) ? $row['purchase_cost'] : null,
-                'useful_life_months' => is_numeric($row['useful_life_months'] ?? null) ? (int) $row['useful_life_months'] : null,
-                'status' => $status,
-                'notes' => trim((string) ($row['notes'] ?? '')) ?: null,
-            ]);
-            $created++;
-        }
+        $result = $importer->import(
+            $request->file('file')->getRealPath(),
+            $request->user()->visibleLocationId(),
+        );
 
         return redirect()->route('web.assets.index')
-            ->with('success', "Impor selesai: {$created} aset ditambahkan, {$skipped} baris dilewati (kategori/lokasi tidak cocok, duplikat, atau invalid).");
-    }
-
-    /**
-     * @return array<int, array<string, string|null>>
-     */
-    private function parseCsv(string $path): array
-    {
-        $rows = [];
-        $handle = fopen($path, 'r');
-        $header = fgetcsv($handle);
-
-        if ($header === false) {
-            fclose($handle);
-
-            return $rows;
-        }
-
-        $header = array_map(fn ($h) => strtolower(trim((string) $h)), $header);
-
-        while (($line = fgetcsv($handle)) !== false) {
-            if (count(array_filter($line, fn ($v) => $v !== null && $v !== '')) === 0) {
-                continue;
-            }
-
-            $rows[] = array_combine($header, array_pad($line, count($header), null));
-        }
-
-        fclose($handle);
-
-        return $rows;
+            ->with('success', "Impor selesai: {$result['created']} aset ditambahkan, {$result['skipped']} baris dilewati (kategori/lokasi tidak cocok, duplikat, atau invalid).");
     }
 }

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Asset;
 use App\Models\AssetDisposal;
 use App\Models\Location;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -13,14 +14,16 @@ class ReportController extends Controller
 {
     public function stockByLocation(Request $request): JsonResponse
     {
+        $visible = fn (Builder $query): Builder => $query->visibleTo($request->user());
+
         $locations = Location::query()
             ->withCount([
-                'assets',
-                'assets as available_count' => fn ($q) => $q->where('status', 'available'),
-                'assets as deployed_count' => fn ($q) => $q->where('status', 'deployed'),
-                'assets as maintenance_count' => fn ($q) => $q->where('status', 'maintenance'),
+                'assets as assets_count' => $visible,
+                'assets as available_count' => fn (Builder $q) => $visible($q)->where('status', 'available'),
+                'assets as deployed_count' => fn (Builder $q) => $visible($q)->where('status', 'deployed'),
+                'assets as maintenance_count' => fn (Builder $q) => $visible($q)->where('status', 'maintenance'),
             ])
-            ->withSum('assets', 'purchase_cost')
+            ->withSum(['assets as assets_sum_purchase_cost' => $visible], 'purchase_cost')
             ->get();
 
         return response()->json([
@@ -30,6 +33,8 @@ class ReportController extends Controller
 
     public function assetHistory(Asset $asset): JsonResponse
     {
+        $this->authorize('view', $asset);
+
         $asset->load([
             'category:id,name,code',
             'location:id,name',
@@ -67,7 +72,8 @@ class ReportController extends Controller
             'asset.category:id,name',
             'asset.location:id,name',
             'authorizedBy:id,name,email',
-        ]);
+        ])
+            ->whereHas('asset', fn (Builder $q) => $q->visibleTo($request->user()));
 
         if ($request->filled('disposal_type')) {
             $query->where('disposal_type', $request->query('disposal_type'));

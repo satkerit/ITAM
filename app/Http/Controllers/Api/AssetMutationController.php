@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Mutation\MutateAssetRequest;
+use App\Models\Asset;
 use App\Models\AssetMutation;
 use App\Services\AssetOperationService;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -13,12 +15,14 @@ class AssetMutationController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $query = AssetMutation::query()->with([
-            'asset:id,asset_code,name,location_id,status',
-            'fromLocation:id,name',
-            'toLocation:id,name',
-            'processedBy:id,name',
-        ]);
+        $query = AssetMutation::query()
+            ->whereHas('asset', fn (Builder $q) => $q->visibleTo($request->user()))
+            ->with([
+                'asset:id,asset_code,name,location_id,status',
+                'fromLocation:id,name',
+                'toLocation:id,name',
+                'processedBy:id,name',
+            ]);
 
         if ($request->filled('asset_id')) {
             $query->where('asset_id', $request->query('asset_id'));
@@ -36,6 +40,8 @@ class AssetMutationController extends Controller
     public function store(MutateAssetRequest $request, AssetOperationService $operations): JsonResponse
     {
         $validated = $request->validated();
+
+        $this->authorize('update', Asset::findOrFail($validated['asset_id']));
 
         $mutation = $operations->mutate(
             $validated['asset_id'],
