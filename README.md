@@ -1,4 +1,4 @@
-# 🏢 ITAM - Enterprise IT Asset Management System
+# 🏢 AssetGuard - Enterprise IT Asset Management System
 
 [![Laravel](https://img.shields.io/badge/Laravel-12.x-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)](https://laravel.com)
 [![PHP](https://img.shields.io/badge/PHP-8.3%20%7C%208.4-777BB4?style=for-the-badge&logo=php&logoColor=white)](https://php.net)
@@ -6,7 +6,7 @@
 [![Security OWASP](https://img.shields.io/badge/Security-OWASP_Top_10-4A90E2?style=for-the-badge&logo=shield&logoColor=white)](https://owasp.org)
 [![Tests Passing](https://img.shields.io/badge/Tests-44%20Passed-brightgreen?style=for-the-badge&logo=checkmarx&logoColor=white)](https://phpunit.de)
 
-**ITAM (IT Asset Management)** adalah platform manajemen siklus hidup aset teknologi informasi tingkat enterprise yang dirancang khusus untuk memonitor, mengaudit, dan mengendalikan inventaris perangkat keras, lisensi perangkat lunak, penyusutan depresiasi nilai buku, serta pemeliharaan infrastruktur teknologi secara terpusat, transparan, dan terstandar keamanan OWASP.
+**AssetGuard (IT Asset Management)** adalah platform manajemen siklus hidup aset teknologi informasi tingkat enterprise yang dirancang khusus untuk memonitor, mengaudit, dan mengendalikan inventaris perangkat keras, lisensi perangkat lunak, penyusutan depresiasi nilai buku, serta pemeliharaan infrastruktur teknologi secara terpusat, transparan, dan terstandar keamanan OWASP.
 
 ---
 

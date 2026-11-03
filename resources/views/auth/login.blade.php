@@ -1,10 +1,10 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id" class="h-full bg-slate-950">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Login Masuk - ITAM Asset Control</title>
+    <title>Login Masuk - Sistem Informasi Manajemen Asset</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -32,7 +32,7 @@
                         IT
                     </div>
                     <div>
-                        <h1 class="text-2xl font-black text-white tracking-tight">ITAM Platform</h1>
+                        <h1 class="text-2xl font-black text-white tracking-tight">Sistem Informasi Manajemen Asset</h1>
                         <p class="text-xs text-indigo-300 font-medium">Enterprise Asset Control & Lifecycle</p>
                     </div>
                 </div>

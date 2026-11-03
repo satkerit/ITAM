@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', $title ?? 'IT Asset Management') - ITAM</title>
+    <title>@yield('title', $title ?? 'Sistem Informasi Manajemen Asset') - AssetGuard</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -40,7 +40,7 @@
                         @endif
                     </div>
                     <div class="truncate">
-                        <span class="font-bold text-white tracking-wide block text-sm truncate">{{ $companyProfile?->name ?? 'ITAM SYSTEM' }}</span>
+                        <span class="font-bold text-white tracking-wide block text-sm truncate">{{ $companyProfile?->name ?? 'AssetGuard SYSTEM' }}</span>
                         <span class="text-[10px] text-slate-400 uppercase tracking-widest block font-semibold truncate">{{ $companyProfile?->city ?? 'Asset Control' }}</span>
                     </div>
                 </div>
@@ -139,7 +139,7 @@
                         </div>
                     </div>
 
-                    <form action="{{ route('logout') }}" method="POST" class="shrink-0" onsubmit="return confirm('Keluar dari sesi aplikasi ITAM?');">
+                    <form action="{{ route('logout') }}" method="POST" class="shrink-0" onsubmit="return confirm('Keluar dari sesi aplikasi AssetGuard?');">
                         @csrf
                         <button type="submit" title="Keluar / Logout" class="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition" aria-label="Logout">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
