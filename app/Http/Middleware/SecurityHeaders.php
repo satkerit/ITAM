@@ -47,7 +47,7 @@ class SecurityHeaders
     private function contentSecurityPolicy(string $nonce): string
     {
         $scriptSources = ["'self'", "'nonce-{$nonce}'", "'unsafe-eval'", 'blob:'];
-        $styleSources = ["'self'", "'nonce-{$nonce}'", 'https://fonts.googleapis.com'];
+        $styleSources = ["'self'", "'nonce-{$nonce}'", 'https://fonts.googleapis.com', 'sha256-RN6Ud2MUzomeI7+ISp9utyGID+S2yR1cKlGpeohgTHI='];
         $connectSources = ["'self'", 'blob:', 'data:'];
 
         if (app()->environment('local')) {
