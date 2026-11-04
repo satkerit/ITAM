@@ -1,4 +1,4 @@
-﻿﻿﻿﻿@extends('layouts.app')
+﻿﻿@extends('layouts.app')
 
 @section('title', 'Manajemen Lokasi Cabang')
 @section('header', 'Manajemen Lokasi Cabang & Gedung')
@@ -71,15 +71,22 @@
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
                                     </button>
 
-                                    @if($item->assets_count === 0 && $item->users_count === 0)
-                                        <form method="POST" action="{{ route('web.locations.destroy', $item) }}" onsubmit="return confirm('Hapus lokasi ini?')">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition" title="Hapus">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                            </button>
-                                        </form>
-                                    @endif
+                                    <form method="POST" action="{{ route('web.locations.destroy', $item) }}" onsubmit="return confirm('Hapus lokasi kantor ini?')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" 
+                                            @if($item->assets_count > 0 || $item->users_count > 0)
+                                                disabled
+                                                title="Tidak dapat dihapus: masih memiliki aset fisik atau pengguna bertugas"
+                                                class="p-1.5 text-slate-300 cursor-not-allowed rounded-lg"
+                                            @else
+                                                title="Hapus Lokasi"
+                                                class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
+                                            @endif
+                                        >
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                        </button>
+                                    </form>
                                 </div>
                             </td>
                         </tr>
