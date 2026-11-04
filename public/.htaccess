@@ -2,8 +2,8 @@
 # Security Headers & Hardening for Production
 # ----------------------------------------------------------------------
 
-# Disable Directory Browsing
-Options -Indexes -MultiViews
+# Disable Directory Browsing and enable Symlinks support
+Options -Indexes -MultiViews +FollowSymLinks
 
 # Block access to hidden files and directories (dotfiles like .env, .git)
 <IfModule mod_rewrite.c>

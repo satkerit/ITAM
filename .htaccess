@@ -16,8 +16,8 @@
     RewriteRule ^(.*)$ public/$1 [L]
 </IfModule>
 
-# Disable Directory Browsing
-Options -Indexes
+# Disable Directory Browsing and enable Symlinks support
+Options -Indexes -MultiViews +FollowSymLinks
 
 # Block sensitive file extensions
 <FilesMatch "(\.(bak|config|sql|fla|psd|ini|log|sh|inc|swp|dist|env)|~)$">
