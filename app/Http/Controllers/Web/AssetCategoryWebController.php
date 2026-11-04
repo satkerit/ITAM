@@ -27,7 +27,7 @@ class AssetCategoryWebController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255', 'unique:asset_categories,name'],
-            'code' => ['required', 'string', 'max:20', 'uppercase', 'unique:asset_categories,code'],
+            'code' => ['required', 'string', 'max:20', 'uppercase'],
             'description' => ['nullable', 'string'],
         ]);
 
@@ -45,7 +45,7 @@ class AssetCategoryWebController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255', 'unique:asset_categories,name,'.$category->id],
-            'code' => ['required', 'string', 'max:20', 'uppercase', 'unique:asset_categories,code,'.$category->id],
+            'code' => ['required', 'string', 'max:20', 'uppercase'],
             'description' => ['nullable', 'string'],
         ]);
 
@@ -110,7 +110,7 @@ class AssetCategoryWebController extends Controller
                 continue;
             }
 
-            if (AssetCategory::where('name', $name)->orWhere('code', $code)->exists()) {
+            if (AssetCategory::where('name', $name)->exists()) {
                 $skipped++;
 
                 continue;
