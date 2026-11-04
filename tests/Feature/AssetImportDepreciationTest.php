@@ -38,11 +38,13 @@ class AssetImportDepreciationTest extends TestCase
     public function test_asset_csv_import_matches_category_and_location(): void
     {
         $category = AssetCategory::create(['name' => 'Laptop', 'code' => 'LPT', 'schema_fields' => []]);
-        Location::create(['name' => 'Kantor Pusat', 'address' => 'Jakarta']);
+        $locPusat = Location::create(['kdloc' => 'KC-PST', 'name' => 'Kantor Pusat', 'address' => 'Jakarta']);
+        $locBdg = Location::create(['kdloc' => 'KC-BDG', 'name' => 'Kantor Cabang Bandung', 'address' => 'Bandung']);
 
-        $csv = "asset_code,name,category_code,location_name,serial_number,purchase_date,purchase_cost,useful_life_months,status,notes\n".
-            "LPT-2026-001,Dell Latitude,LPT,Kantor Pusat,SN1,2026-01-15,15000000,48,available,Unit baru\n".
-            "BAD-001,Unknown,ZZZ,Kantor Pusat,,,???,,available,\n";
+        $csv = "asset_code,name,category_code,kdloc,location_name,serial_number,purchase_date,purchase_cost,useful_life_months,status,notes\n".
+            "LPT-2026-001,Dell Latitude,LPT,,Kantor Pusat,SN1,2026-01-15,15000000,48,available,Unit baru\n".
+            "LPT-2026-002,ThinkPad T14,LPT,KC-BDG,,SN2,2026-01-20,18000000,36,available,Unit via kdloc\n".
+            "BAD-001,Unknown,ZZZ,,Kantor Pusat,,,???,,available,\n";
         $file = UploadedFile::fake()->createWithContent('aset.csv', $csv);
 
         $response = $this->post(route('web.assets.import'), ['file' => $file]);
@@ -51,7 +53,14 @@ class AssetImportDepreciationTest extends TestCase
         $this->assertDatabaseHas('assets', [
             'asset_code' => 'LPT-2026-001',
             'category_id' => $category->id,
+            'location_id' => $locPusat->id,
             'useful_life_months' => 48,
+        ]);
+        $this->assertDatabaseHas('assets', [
+            'asset_code' => 'LPT-2026-002',
+            'category_id' => $category->id,
+            'location_id' => $locBdg->id,
+            'useful_life_months' => 36,
         ]);
         $this->assertDatabaseMissing('assets', ['asset_code' => 'BAD-001']);
 

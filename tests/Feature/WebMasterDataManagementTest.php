@@ -8,6 +8,7 @@ use App\Models\AssetCategory;
 use App\Models\Location;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
 
 class WebMasterDataManagementTest extends TestCase
@@ -60,6 +61,17 @@ class WebMasterDataManagementTest extends TestCase
         $response = $this->delete(route('web.locations.destroy', $location));
         $response->assertRedirect(route('web.locations.index'));
         $this->assertDatabaseMissing('locations', ['id' => $location->id]);
+
+        // Template download
+        $templateResponse = $this->get(route('web.locations.template'));
+        $templateResponse->assertStatus(200);
+
+        // Import test
+        $csvContent = "name,address,description\nCabang Medan,Jl. Gatot Subroto No 1,Kantor Cabang Baru\n";
+        $file = UploadedFile::fake()->createWithContent('locations.csv', $csvContent);
+        $importResponse = $this->post(route('web.locations.import'), ['file' => $file]);
+        $importResponse->assertRedirect(route('web.locations.index'));
+        $this->assertDatabaseHas('locations', ['name' => 'Cabang Medan']);
     }
 
     public function test_category_crud_and_referential_integrity(): void

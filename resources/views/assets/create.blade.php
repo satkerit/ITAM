@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Registrasi Aset Baru')
 @section('header', 'Registrasi Aset IT Baru')
@@ -46,7 +46,7 @@
                     <label class="block text-xs font-bold uppercase text-slate-700 mb-2">Lokasi Penempatan *</label>
                     <select name="location_id" required class="w-full text-sm rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 px-3.5 py-2.5 border">
                         @foreach($locations as $loc)
-                            <option value="{{ $loc->id }}">{{ $loc->name }}</option>
+                            <option value="{{ $loc->id }}">{{ $loc->kdloc ? '[' . $loc->kdloc . '] ' : '' }}{{ $loc->name }}</option>
                         @endforeach
                     </select>
                 </div>

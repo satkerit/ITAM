@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿@extends('layouts.app')
+﻿﻿@extends('layouts.app')
 
 @section('title', 'Manajemen Pengguna & RBAC')
 @section('header', 'Manajemen Pengguna & Kontrol Akses (RBAC)')
@@ -95,7 +95,11 @@
                                 </span>
                             </td>
                             <td class="px-6 py-4 text-xs text-slate-600">
-                                {{ $item->location?->name ?? 'Belum Ditugaskan' }}
+                                @if($item->location)
+                                    {{ $item->location->kdloc ? '[' . $item->location->kdloc . '] ' : '' }}{{ $item->location->name }}
+                                @else
+                                    <span class="text-slate-400 italic">Belum Ditugaskan</span>
+                                @endif
                             </td>
                             <td class="px-6 py-4 text-center font-bold text-xs text-slate-900">
                                 <span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -184,7 +188,7 @@
                         <select name="location_id" class="w-full text-xs rounded-xl border-slate-200 border px-3 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-indigo-600">
                             <option value="">Pilih Kantor</option>
                             @foreach($locations as $loc)
-                                <option value="{{ $loc->id }}">{{ $loc->name }}</option>
+                                <option value="{{ $loc->id }}">{{ $loc->kdloc ? '[' . $loc->kdloc . '] ' : '' }}{{ $loc->name }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -239,7 +243,7 @@
                         <select name="location_id" x-model="editData.location_id" class="w-full text-xs rounded-xl border-slate-200 border px-3 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-indigo-600">
                             <option value="">Pilih Kantor</option>
                             @foreach($locations as $loc)
-                                <option value="{{ $loc->id }}">{{ $loc->name }}</option>
+                                <option value="{{ $loc->id }}">{{ $loc->kdloc ? '[' . $loc->kdloc . '] ' : '' }}{{ $loc->name }}</option>
                             @endforeach
                         </select>
                     </div>

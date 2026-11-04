@@ -133,7 +133,12 @@
             <div class="space-y-3">
                 @foreach($byLocation as $loc)
                     <div class="flex items-center justify-between text-sm py-1 border-b border-slate-100 last:border-none">
-                        <span class="font-medium text-slate-700 truncate pr-2">{{ $loc->name }}</span>
+                        <span class="font-medium text-slate-700 truncate pr-2">
+                            @if($loc->kdloc)
+                                <span class="font-mono text-indigo-600 font-semibold mr-1">[{{ $loc->kdloc }}]</span>
+                            @endif
+                            {{ $loc->name }}
+                        </span>
                         <span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-800 font-bold text-xs">{{ $loc->assets_count }} unit</span>
                     </div>
                 @endforeach
@@ -188,7 +193,10 @@
                                 {{ $asset->category->name }}
                             </td>
                             <td class="px-6 py-3.5 text-xs text-slate-600">
-                                {{ $asset->location->name }}
+                                @if($asset->location?->kdloc)
+                                    <span class="font-mono text-indigo-600 font-semibold mr-1">[{{ $asset->location->kdloc }}]</span>
+                                @endif
+                                {{ $asset->location?->name ?? '-' }}
                             </td>
                             <td class="px-6 py-3.5 text-xs">
                                 <span class="px-2.5 py-1 rounded-full text-[11px] font-semibold

@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Peminjaman / Check-out & Check-in')
 
@@ -107,7 +107,7 @@
                     <select name="asset_id" required class="w-full text-xs rounded-xl border-slate-200 border px-3 py-2 bg-white focus:ring-indigo-500 focus:border-indigo-500">
                         <option value="">-- Pilih Perangkat (Available) --</option>
                         @foreach($availableAssets as $asset)
-                            <option value="{{ $asset->id }}">{{ $asset->name }} [{{ $asset->asset_code }}] - {{ $asset->location->name }}</option>
+                            <option value="{{ $asset->id }}">{{ $asset->name }} [{{ $asset->asset_code }}] - {{ $asset->location?->kdloc ? '['.$asset->location->kdloc.'] ' : '' }}{{ $asset->location?->name }}</option>
                         @endforeach
                     </select>
                 </div>

@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿@extends('layouts.app')
+﻿﻿@extends('layouts.app')
 
 @section('title', 'Scan QR Code Aset')
 @section('header', 'Audit Fisik & Pemindai QR Code')
@@ -98,7 +98,7 @@
                 </div>
 
                 <h3 class="text-lg font-bold text-slate-900">{{ $foundAsset->name }}</h3>
-                <p class="text-xs text-slate-500 mt-0.5 mb-4">{{ $foundAsset->category->name }} &bull; {{ $foundAsset->location->name }}</p>
+                <p class="text-xs text-slate-500 mt-0.5 mb-4">{{ $foundAsset->category->name }} &bull; {{ $foundAsset->location->kdloc ? '[' . $foundAsset->location->kdloc . '] ' : '' }}{{ $foundAsset->location->name }}</p>
 
                 <dl class="grid grid-cols-2 gap-3 text-xs mb-4">
                     <div>

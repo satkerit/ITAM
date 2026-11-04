@@ -23,8 +23,9 @@ class AssetCsvImporter
         $locationQuery = Location::query()
             ->when($visibleLocationId !== null, fn ($query) => $query->whereKey($visibleLocationId));
 
-        $locations = $locationQuery->pluck('id', 'name');
-        $defaultLocationId = $locations->first();
+        $locationsByName = $locationQuery->pluck('id', 'name');
+        $locationsByKdloc = (clone $locationQuery)->whereNotNull('kdloc')->pluck('id', 'kdloc');
+        $defaultLocationId = $locationsByName->first();
 
         $rows = $this->parseCsv($path);
         $created = 0;
@@ -34,7 +35,19 @@ class AssetCsvImporter
             $assetCode = trim((string) ($row['asset_code'] ?? ''));
             $name = trim((string) ($row['name'] ?? ''));
             $categoryId = $categories[strtoupper(trim((string) ($row['category_code'] ?? '')))] ?? null;
-            $locationId = $locations[trim((string) ($row['location_name'] ?? ''))] ?? $defaultLocationId;
+
+            // Cari lokasi via kdloc terlebih dahulu, jika kosong/tidak match fallback ke location_name
+            $rawKdloc = trim((string) ($row['kdloc'] ?? $row['location_code'] ?? ''));
+            $rawLocationName = trim((string) ($row['location_name'] ?? ''));
+
+            $locationId = null;
+            if ($rawKdloc !== '' && isset($locationsByKdloc[$rawKdloc])) {
+                $locationId = $locationsByKdloc[$rawKdloc];
+            } elseif ($rawLocationName !== '' && isset($locationsByName[$rawLocationName])) {
+                $locationId = $locationsByName[$rawLocationName];
+            } else {
+                $locationId = $defaultLocationId;
+            }
 
             if ($assetCode === '' || $name === '' || $categoryId === null || $locationId === null
                 || preg_match('/^[A-Za-z0-9._-]+$/', $assetCode) !== 1

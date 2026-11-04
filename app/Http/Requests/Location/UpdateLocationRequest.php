@@ -22,6 +22,7 @@ class UpdateLocationRequest extends FormRequest
         $locationId = is_object($location) ? $location->id : $location;
 
         return [
+            'kdloc' => ['nullable', 'string', 'max:50', Rule::unique('locations', 'kdloc')->ignore($locationId)],
             'name' => ['sometimes', 'required', 'string', 'max:255', Rule::unique('locations', 'name')->ignore($locationId)],
             'address' => ['sometimes', 'required', 'string'],
             'description' => ['nullable', 'string'],

@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿@extends('layouts.app')
+﻿﻿@extends('layouts.app')
 
 @section('title', 'Katalog Aset')
 @section('header', 'Katalog Perangkat & Hardware')
@@ -33,7 +33,7 @@
                 <select name="location_id" class="w-full text-sm rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 px-3.5 py-2 border">
                     <option value="">Semua Lokasi</option>
                     @foreach($locations as $loc)
-                        <option value="{{ $loc->id }}" {{ request('location_id') == $loc->id ? 'selected' : '' }}>{{ $loc->name }}</option>
+                        <option value="{{ $loc->id }}" {{ request('location_id') == $loc->id ? 'selected' : '' }}>{{ $loc->kdloc ? '[' . $loc->kdloc . '] ' : '' }}{{ $loc->name }}</option>
                     @endforeach
                 </select>
             </div>
@@ -103,7 +103,7 @@
                     <h3 class="font-bold text-slate-900 group-hover:text-indigo-600 transition mb-1 text-base">
                         <a href="{{ route('web.assets.show', $asset) }}">{{ $asset->name }}</a>
                     </h3>
-                    <p class="text-xs text-slate-500 mb-4">{{ $asset->category->name }} &bull; {{ $asset->location->name }}</p>
+                    <p class="text-xs text-slate-500 mb-4">{{ $asset->category->name }} &bull; {{ $asset->location->kdloc ? '[' . $asset->location->kdloc . '] ' : '' }}{{ $asset->location->name }}</p>
 
                     @if(!empty($asset->specifications))
                         <div class="p-3 bg-slate-50 rounded-xl space-y-1 mb-4 text-xs text-slate-600">

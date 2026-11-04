@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Laporan Inventaris & Audit Trail')
 @section('header', 'Laporan Inventaris & Audit Trail')
@@ -91,7 +91,12 @@
                     @forelse($locations as $loc)
                         <tr class="hover:bg-slate-50/70 transition">
                             <td class="px-6 py-4">
-                                <span class="font-bold text-slate-900 text-xs block">{{ $loc->name }}</span>
+                                <span class="font-bold text-slate-900 text-xs block">
+                                    @if($loc->kdloc)
+                                        <span class="font-mono text-indigo-600 font-semibold mr-1">[{{ $loc->kdloc }}]</span>
+                                    @endif
+                                    {{ $loc->name }}
+                                </span>
                                 <span class="text-[11px] text-slate-500">{{ $loc->address ?? 'Lokasi Terdaftar' }}</span>
                             </td>
                             <td class="px-6 py-4 text-center font-bold text-xs text-slate-900">

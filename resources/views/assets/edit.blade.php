@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Edit Aset: '.$asset->asset_code)
 @section('header', 'Edit Data Aset')
@@ -36,7 +36,7 @@
                     <label class="block text-xs font-bold uppercase text-slate-700 mb-2">Lokasi Fisik *</label>
                     <select name="location_id" required class="w-full text-sm rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 px-3.5 py-2.5 border bg-white">
                         @foreach($locations as $location)
-                            <option value="{{ $location->id }}" @selected(old('location_id', $asset->location_id) == $location->id)>{{ $location->name }}</option>
+                            <option value="{{ $location->id }}" @selected(old('location_id', $asset->location_id) == $location->id)>{{ $location->kdloc ? '[' . $location->kdloc . '] ' : '' }}{{ $location->name }}</option>
                         @endforeach
                     </select>
                     @error('location_id') <span class="text-xs text-rose-600 mt-1 block">{{ $message }}</span> @enderror

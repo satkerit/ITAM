@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
+﻿﻿<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="utf-8">
@@ -68,7 +68,7 @@
                     {!! $qrCodes[$asset->id] !!}
                     <div class="code">{{ $asset->asset_code }}</div>
                     <div class="name">{{ $asset->name }}</div>
-                    <div class="meta">{{ $asset->location->name }}</div>
+                    <div class="meta">{{ $asset->location->kdloc ? '[' . $asset->location->kdloc . '] ' : '' }}{{ $asset->location->name }}</div>
                 </div>
             @endforeach
         </div>

@@ -72,6 +72,8 @@ Route::prefix('app')->name('web.')->middleware('auth')->group(function () {
     Route::middleware('role:admin')->group(function () {
         // Manajemen Lokasi Cabang
         Route::get('/locations', [LocationWebController::class, 'index'])->name('locations.index');
+        Route::get('/locations/import/template', [LocationWebController::class, 'downloadTemplate'])->name('locations.template');
+        Route::post('/locations/import', [LocationWebController::class, 'import'])->name('locations.import');
         Route::post('/locations', [LocationWebController::class, 'store'])->name('locations.store');
         Route::put('/locations/{location}', [LocationWebController::class, 'update'])->name('locations.update');
         Route::delete('/locations/{location}', [LocationWebController::class, 'destroy'])->name('locations.destroy');

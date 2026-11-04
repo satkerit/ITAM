@@ -253,8 +253,8 @@ class AssetWebController extends Controller
     {
         return response()->streamDownload(function (): void {
             $out = fopen('php://output', 'w');
-            fputcsv($out, ['asset_code', 'name', 'category_code', 'location_name', 'serial_number', 'purchase_date', 'purchase_cost', 'useful_life_months', 'status', 'notes']);
-            fputcsv($out, ['LPT-2026-001', 'Dell Latitude 5420', 'LPT', 'Kantor Pusat', 'SN123456', '2026-01-15', '15000000', '48', 'available', 'Unit operasional baru']);
+            fputcsv($out, ['asset_code', 'name', 'category_code', 'kdloc', 'location_name', 'serial_number', 'purchase_date', 'purchase_cost', 'useful_life_months', 'status', 'notes']);
+            fputcsv($out, ['LPT-2026-001', 'Dell Latitude 5420', 'LPT', 'KC-SDR', 'Kantor Pusat', 'SN123456', '2026-01-15', '15000000', '48', 'available', 'Unit operasional baru']);
             fclose($out);
         }, 'template-aset.csv', ['Content-Type' => 'text/csv']);
     }

@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿@extends('layouts.app')
+﻿﻿@extends('layouts.app')
 
 @section('title', 'Mutasi Antar Lokasi')
 
@@ -93,7 +93,7 @@
                     <select name="asset_id" required class="w-full text-xs rounded-xl border-slate-200 border px-3 py-2 bg-white focus:ring-indigo-500 focus:border-indigo-500">
                         <option value="">-- Pilih Perangkat --</option>
                         @foreach($assets as $asset)
-                            <option value="{{ $asset->id }}">{{ $asset->name }} [{{ $asset->asset_code }}] - Saat ini di: {{ $asset->location->name }}</option>
+                            <option value="{{ $asset->id }}">{{ $asset->name }} [{{ $asset->asset_code }}] - Saat ini di: {{ $asset->location->kdloc ? '[' . $asset->location->kdloc . '] ' : '' }}{{ $asset->location->name }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -103,7 +103,7 @@
                     <select name="to_location_id" required class="w-full text-xs rounded-xl border-slate-200 border px-3 py-2 bg-white focus:ring-indigo-500 focus:border-indigo-500">
                         <option value="">-- Pilih Lokasi Kantor Cabang / Ruangan --</option>
                         @foreach($locations as $loc)
-                            <option value="{{ $loc->id }}">{{ $loc->name }} ({{ $loc->code }})</option>
+                            <option value="{{ $loc->id }}">{{ $loc->kdloc ? '[' . $loc->kdloc . '] ' : '' }}{{ $loc->name }}</option>
                         @endforeach
                     </select>
                 </div>

@@ -18,6 +18,7 @@ class StoreLocationRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'kdloc' => ['nullable', 'string', 'max:50', 'unique:locations,kdloc'],
             'name' => ['required', 'string', 'max:255', 'unique:locations,name'],
             'address' => ['required', 'string'],
             'description' => ['nullable', 'string'],
