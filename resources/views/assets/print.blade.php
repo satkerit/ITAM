@@ -55,9 +55,15 @@
                 @endforeach
             </div>
             <a href="{{ route('web.assets.index') }}" class="btn btn-secondary">Kembali</a>
-            <button type="button" onclick="window.print()" class="btn btn-primary">Cetak</button>
+            <button type="button" id="printBtn" class="btn btn-primary">Cetak</button>
         </div>
     </div>
+
+    <script nonce="{{ Vite::cspNonce() }}">
+        document.getElementById('printBtn').addEventListener('click', function() {
+            window.print();
+        });
+    </script>
 
     @if($assets->isEmpty())
         <div class="empty">Tidak ada aset yang cocok untuk dicetak.</div>

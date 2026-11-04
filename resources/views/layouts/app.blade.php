@@ -139,7 +139,7 @@
                         </div>
                     </div>
 
-                    <form action="{{ route('logout') }}" method="POST" class="shrink-0" onsubmit="return confirm('Keluar dari sesi aplikasi AssetGuard?');">
+                    <form action="{{ route('logout') }}" method="POST" class="shrink-0" x-data="{}" @submit.prevent="if(confirm('Keluar dari sesi aplikasi AssetGuard?')) $el.submit()">
                         @csrf
                         <button type="submit" title="Keluar / Logout" class="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition" aria-label="Logout">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>

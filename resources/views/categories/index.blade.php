@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', 'Manajemen Kategori Aset')
 @section('header', 'Manajemen Kategori & Klasifikasi Aset')
@@ -88,7 +88,7 @@
                                     </button>
 
                                     @if($item->assets_count === 0 && $item->software_licenses_count === 0)
-                                        <form method="POST" action="{{ route('web.categories.destroy', $item) }}" onsubmit="return confirm('Hapus kategori ini?')">
+                                        <form method="POST" action="{{ route('web.categories.destroy', $item) }}" x-data="{}" @submit.prevent="if(confirm('Hapus kategori ini?')) $el.submit()">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition" title="Hapus">
