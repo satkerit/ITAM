@@ -33,10 +33,7 @@
                     <div>
                         <span class="block text-slate-400 text-xs uppercase font-bold">Lokasi Fisik</span>
                         <span class="font-semibold text-slate-800">
-                            {{ $asset->location->name }}
-                            @if($asset->location->kdloc)
-                                <span class="text-xs font-mono text-slate-500 font-normal">({{ $asset->location->kdloc }})</span>
-                            @endif
+                            {{ $asset->location->kdloc ? '[' . $asset->location->kdloc . '] ' : '' }}{{ $asset->location->name }}
                         </span>
                     </div>
                     <div>

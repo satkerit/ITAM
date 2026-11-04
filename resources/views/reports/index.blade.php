@@ -207,7 +207,7 @@
                             <h4 class="font-bold text-lg text-slate-900">{{ $selectedAsset->name }}</h4>
                             <div class="flex items-center gap-2 mt-0.5">
                                 <span class="font-mono text-xs font-semibold text-slate-900 bg-white px-2 py-0.5 rounded border border-slate-200">{{ $selectedAsset->asset_code }}</span>
-                                <span class="text-xs text-slate-500">&bull; {{ $selectedAsset->category->name }} &bull; Lokasi Fisik Saat Ini: <strong class="text-slate-800">{{ $selectedAsset->location->name }}</strong></span>
+                                <span class="text-xs text-slate-500">&bull; {{ $selectedAsset->category->name }} &bull; Lokasi Fisik Saat Ini: <strong class="text-slate-800">{{ $selectedAsset->location->kdloc ? '[' . $selectedAsset->location->kdloc . '] ' : '' }}{{ $selectedAsset->location->name }}</strong></span>
                             </div>
                         </div>
                     </div>

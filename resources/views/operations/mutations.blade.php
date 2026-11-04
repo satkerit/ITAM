@@ -1,4 +1,4 @@
-﻿﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Mutasi Antar Lokasi')
 
@@ -44,9 +44,9 @@
                             </td>
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-2 text-xs">
-                                    <span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-medium">{{ $item->fromLocation->name }}</span>
+                                    <span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-medium">{{ $item->fromLocation->kdloc ? '[' . $item->fromLocation->kdloc . '] ' : '' }}{{ $item->fromLocation->name }}</span>
                                     <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
-                                    <span class="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 font-semibold border border-indigo-200">{{ $item->toLocation->name }}</span>
+                                    <span class="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 font-semibold border border-indigo-200">{{ $item->toLocation->kdloc ? '[' . $item->toLocation->kdloc . '] ' : '' }}{{ $item->toLocation->name }}</span>
                                 </div>
                             </td>
                             <td class="px-6 py-4 text-xs text-slate-600">

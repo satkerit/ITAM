@@ -1,4 +1,4 @@
-﻿﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Manajemen Pengguna & RBAC')
 @section('header', 'Manajemen Pengguna & Kontrol Akses (RBAC)')
@@ -47,7 +47,7 @@
                     <option value="">Semua Lokasi Kantor</option>
                     @foreach($locations as $loc)
                         <option value="{{ $loc->id }}" {{ request('location_id') == $loc->id ? 'selected' : '' }}>
-                            {{ $loc->name }}
+                            {{ $loc->kdloc ? '[' . $loc->kdloc . '] ' : '' }}{{ $loc->name }}
                         </option>
                     @endforeach
                 </select>
