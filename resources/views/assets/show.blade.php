@@ -123,10 +123,13 @@
                         @endif
                     </h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 @if($asset->category->group === 'IT') bg-blue-50/50 border-blue-200/70 @else bg-amber-50/50 border-amber-200/70 @endif rounded-2xl border p-5">
+                        @php
+                            $specLabels = $asset->category->specificationFields->pluck('field_label', 'field_name');
+                        @endphp
                         @foreach($asset->specifications as $key => $val)
                             @if($val)
                                 <div class="p-3 bg-white rounded-xl border @if($asset->category->group === 'IT') border-blue-100 @else border-amber-100 @endif flex items-center justify-between text-xs">
-                                    <span class="font-bold uppercase @if($asset->category->group === 'IT') text-blue-500 @else text-amber-600 @endif">{{ str_replace('_', ' ', $key) }}</span>
+                                    <span class="font-bold uppercase @if($asset->category->group === 'IT') text-blue-500 @else text-amber-600 @endif">{{ $specLabels[$key] ?? str_replace('_', ' ', $key) }}</span>
                                     <span class="font-semibold text-slate-900">{{ is_array($val) ? json_encode($val) : $val }}</span>
                                 </div>
                             @endif

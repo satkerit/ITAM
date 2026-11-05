@@ -31,7 +31,7 @@ class AssetWebController extends Controller
         return view('assets.index', [
             'assets' => $assets,
             'locations' => $this->availableLocations($request->user()),
-            'categories' => AssetCategory::all(),
+            'categories' => AssetCategory::with('specificationFields')->get(),
         ]);
     }
 
@@ -128,7 +128,7 @@ class AssetWebController extends Controller
         return view('assets.edit', [
             'asset' => $asset,
             'locations' => $this->availableLocations($request->user()),
-            'categories' => AssetCategory::all(),
+            'categories' => AssetCategory::with('specificationFields')->get(),
         ]);
     }
 

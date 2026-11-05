@@ -86,6 +86,12 @@ Route::prefix('app')->name('web.')->middleware('auth')->group(function () {
         Route::put('/categories/{category}', [AssetCategoryWebController::class, 'update'])->name('categories.update');
         Route::delete('/categories/{category}', [AssetCategoryWebController::class, 'destroy'])->name('categories.destroy');
 
+        // Spesifikasi Template per Kategori
+        Route::get('/categories/{category}/specifications', [AssetCategoryWebController::class, 'specifications'])->name('categories.specifications');
+        Route::post('/categories/{category}/specifications', [AssetCategoryWebController::class, 'storeSpecification'])->name('categories.specifications.store');
+        Route::put('/categories/{category}/specifications/{specification}', [AssetCategoryWebController::class, 'updateSpecification'])->name('categories.specifications.update');
+        Route::delete('/categories/{category}/specifications/{specification}', [AssetCategoryWebController::class, 'destroySpecification'])->name('categories.specifications.destroy');
+
         // Manajemen User & Role (RBAC)
         Route::get('/users', [UserWebController::class, 'index'])->name('users.index');
         Route::post('/users', [UserWebController::class, 'store'])->name('users.store');

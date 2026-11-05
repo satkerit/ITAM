@@ -28,4 +28,9 @@ class AssetCategory extends Model
     {
         return $this->hasMany(SoftwareLicense::class, 'category_id');
     }
+
+    public function specificationFields(): HasMany
+    {
+        return $this->hasMany(AssetCategorySpecification::class, 'category_id')->orderBy('sort_order');
+    }
 }

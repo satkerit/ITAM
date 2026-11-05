@@ -13,6 +13,9 @@
             },
             get isITGroup() {
                 return this.currentCategory && this.currentCategory.group === 'IT';
+            },
+            get specFields() {
+                return (this.currentCategory && this.currentCategory.specification_fields) ? this.currentCategory.specification_fields : [];
             }
          }">
 
@@ -90,83 +93,35 @@
                 </div>
             </div>
 
-            <!-- Spesifikasi Teknis (IT Group) -->
-            <div class="pt-4 border-t border-slate-200" x-show="isITGroup">
+            <!-- Spesifikasi Dinamis (berdasarkan template kategori) -->
+            <div class="pt-4 border-t border-slate-200" x-show="specFields.length > 0">
                 <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-2">
-                    <span class="w-2 h-2 rounded-full bg-blue-600"></span>
-                    Spesifikasi Teknis
+                    <span class="w-2 h-2 rounded-full bg-indigo-600"></span>
+                    Spesifikasi Aset
                 </h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-blue-50/50 p-5 rounded-2xl border border-blue-200/70">
-                    <div>
-                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">Processor / CPU</label>
-                        <input type="text" name="specifications[processor]" placeholder="Contoh: Intel Core i7-1265U" class="w-full text-sm rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 px-3.5 py-2 border bg-white">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">RAM / Memory</label>
-                        <input type="text" name="specifications[ram]" placeholder="Contoh: 16GB DDR4 3200MHz" class="w-full text-sm rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 px-3.5 py-2 border bg-white">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">Storage / Penyimpanan</label>
-                        <input type="text" name="specifications[storage]" placeholder="Contoh: 512GB SSD NVMe" class="w-full text-sm rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 px-3.5 py-2 border bg-white">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">Operating System</label>
-                        <input type="text" name="specifications[os]" placeholder="Contoh: Windows 11 Pro" class="w-full text-sm rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 px-3.5 py-2 border bg-white">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">IP Address</label>
-                        <input type="text" name="specifications[ip_address]" placeholder="Contoh: 192.168.1.100" class="w-full text-sm rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 px-3.5 py-2 border bg-white">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">MAC Address</label>
-                        <input type="text" name="specifications[mac_address]" placeholder="Contoh: AA:BB:CC:DD:EE:FF" class="w-full text-sm rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 px-3.5 py-2 border bg-white">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">GPU / VGA</label>
-                        <input type="text" name="specifications[gpu]" placeholder="Contoh: NVIDIA GeForce RTX 3050" class="w-full text-sm rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 px-3.5 py-2 border bg-white">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">Monitor / Display</label>
-                        <input type="text" name="specifications[monitor]" placeholder="Contoh: 14 inch FHD IPS" class="w-full text-sm rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 px-3.5 py-2 border bg-white">
-                    </div>
-                </div>
-            </div>
-
-            <!-- Spesifikasi Umum (NON-IT Group) -->
-            <div class="pt-4 border-t border-slate-200" x-show="currentCategory && !isITGroup">
-                <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-2">
-                    <span class="w-2 h-2 rounded-full bg-amber-600"></span>
-                    Spesifikasi Umum
-                </h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-amber-50/50 p-5 rounded-2xl border border-amber-200/70">
-                    <div>
-                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">Merek / Brand</label>
-                        <input type="text" name="specifications[brand]" placeholder="Contoh: IKEA / Olympus" class="w-full text-sm rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 px-3.5 py-2 border bg-white">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">Model / Tipe</label>
-                        <input type="text" name="specifications[model]" placeholder="Contoh: Bekant Desk / FE-230" class="w-full text-sm rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 px-3.5 py-2 border bg-white">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">Ukuran / Dimensi</label>
-                        <input type="text" name="specifications[dimensions]" placeholder="Contoh: 120x60x75 cm" class="w-full text-sm rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 px-3.5 py-2 border bg-white">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">Warna</label>
-                        <input type="text" name="specifications[color]" placeholder="Contoh: Hitam / Putih" class="w-full text-sm rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 px-3.5 py-2 border bg-white">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">Bahan / Material</label>
-                        <input type="text" name="specifications[material]" placeholder="Contoh: Kayu / Plastik / Metal" class="w-full text-sm rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 px-3.5 py-2 border bg-white">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">Kapasitas</label>
-                        <input type="text" name="specifications[capacity]" placeholder="Contoh: 2 orang / 500 ml" class="w-full text-sm rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 px-3.5 py-2 border bg-white">
-                    </div>
-                    <div class="md:col-span-2">
-                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">Fitur Tambahan</label>
-                        <textarea name="specifications[features]" rows="2" placeholder="Contoh: Adjustable height, Kabel management, dll" class="w-full text-sm rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 px-3.5 py-2 border bg-white"></textarea>
-                    </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-indigo-50/50 p-5 rounded-2xl border border-indigo-200/70">
+                    <template x-for="field in specFields" :key="field.id">
+                        <div :class="field.field_type === 'textarea' ? 'md:col-span-2' : ''">
+                            <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5" x-text="field.field_label + (field.is_required ? ' *' : '')"></label>
+                            <template x-if="field.field_type === 'text' || field.field_type === 'number'">
+                                <input :type="field.field_type" :name="'specifications[' + field.field_name + ']'" :required="field.is_required" class="w-full text-sm rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 px-3.5 py-2 border bg-white">
+                            </template>
+                            <template x-if="field.field_type === 'date'">
+                                <input type="date" :name="'specifications[' + field.field_name + ']'" :required="field.is_required" class="w-full text-sm rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 px-3.5 py-2 border bg-white">
+                            </template>
+                            <template x-if="field.field_type === 'textarea'">
+                                <textarea :name="'specifications[' + field.field_name + ']'" :required="field.is_required" rows="2" class="w-full text-sm rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 px-3.5 py-2 border bg-white"></textarea>
+                            </template>
+                            <template x-if="field.field_type === 'select'">
+                                <select :name="'specifications[' + field.field_name + ']'" :required="field.is_required" class="w-full text-sm rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 px-3.5 py-2 border bg-white">
+                                    <option value="">-- Pilih --</option>
+                                    <template x-for="opt in (field.field_options || [])" :key="opt">
+                                        <option :value="opt" x-text="opt"></option>
+                                    </template>
+                                </select>
+                            </template>
+                        </div>
+                    </template>
                 </div>
             </div>
 

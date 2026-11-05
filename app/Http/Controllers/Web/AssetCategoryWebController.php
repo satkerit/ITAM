@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Models\AssetCategory;
+use App\Models\AssetCategorySpecification;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -138,6 +140,107 @@ class AssetCategoryWebController extends Controller
 
         return redirect()->route('web.categories.index')
             ->with('success', "Impor selesai: {$created} kategori ditambahkan, {$skipped} baris dilewati (duplikat/invalid).");
+    }
+
+    /**
+     * Tampilkan halaman kelola spesifikasi template untuk kategori.
+     */
+    public function specifications(AssetCategory $category): View
+    {
+        $category->load('specificationFields');
+
+        return view('categories.specifications', [
+            'category' => $category,
+        ]);
+    }
+
+    /**
+     * Simpan field spesifikasi baru.
+     */
+    public function storeSpecification(Request $request, AssetCategory $category): JsonResponse
+    {
+        $validated = $request->validate([
+            'field_name' => ['required', 'string', 'max:100', 'regex:/^[a-z][a-z0-9_]*$/'],
+            'field_label' => ['required', 'string', 'max:150'],
+            'field_type' => ['required', 'in:text,number,date,select,textarea'],
+            'field_options' => ['nullable', 'json'],
+            'is_required' => ['boolean'],
+            'sort_order' => ['integer', 'min:0'],
+        ]);
+
+        // Check unique field_name per category
+        if ($category->specificationFields()->where('field_name', $validated['field_name'])->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Field name sudah digunakan dalam kategori ini.',
+            ], 422);
+        }
+
+        $spec = $category->specificationFields()->create([
+            'field_name' => $validated['field_name'],
+            'field_label' => $validated['field_label'],
+            'field_type' => $validated['field_type'],
+            'field_options' => isset($validated['field_options']) ? json_decode($validated['field_options'], true) : null,
+            'is_required' => $validated['is_required'] ?? false,
+            'sort_order' => $validated['sort_order'] ?? 0,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Field spesifikasi berhasil ditambahkan.',
+            'data' => $spec,
+        ]);
+    }
+
+    /**
+     * Update field spesifikasi.
+     */
+    public function updateSpecification(Request $request, AssetCategory $category, AssetCategorySpecification $specification): JsonResponse
+    {
+        $validated = $request->validate([
+            'field_name' => ['required', 'string', 'max:100', 'regex:/^[a-z][a-z0-9_]*$/'],
+            'field_label' => ['required', 'string', 'max:150'],
+            'field_type' => ['required', 'in:text,number,date,select,textarea'],
+            'field_options' => ['nullable', 'json'],
+            'is_required' => ['boolean'],
+            'sort_order' => ['integer', 'min:0'],
+        ]);
+
+        // Check unique field_name per category (exclude current)
+        if ($category->specificationFields()->where('field_name', $validated['field_name'])->where('id', '!=', $specification->id)->exists()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Field name sudah digunakan dalam kategori ini.',
+            ], 422);
+        }
+
+        $specification->update([
+            'field_name' => $validated['field_name'],
+            'field_label' => $validated['field_label'],
+            'field_type' => $validated['field_type'],
+            'field_options' => isset($validated['field_options']) ? json_decode($validated['field_options'], true) : null,
+            'is_required' => $validated['is_required'] ?? false,
+            'sort_order' => $validated['sort_order'] ?? 0,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Field spesifikasi berhasil diperbarui.',
+            'data' => $specification,
+        ]);
+    }
+
+    /**
+     * Hapus field spesifikasi.
+     */
+    public function destroySpecification(AssetCategory $category, AssetCategorySpecification $specification): JsonResponse
+    {
+        $specification->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Field spesifikasi berhasil dihapus.',
+        ]);
     }
 
     /**
