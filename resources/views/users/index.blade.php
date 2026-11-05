@@ -8,7 +8,29 @@
     openCreateModal: false,
     openEditModal: false,
     editUrl: '',
-    editData: { name: '', email: '', role: 'staff', location_id: '' }
+    editData: { name: '', email: '', role: 'staff', location_id: '' },
+    editLoading: false,
+    editError: '',
+    async submitEdit() {
+        this.editLoading = true;
+        this.editError = '';
+        try {
+            const response = await fetch(this.editUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=\"csrf-token\"]').content },
+                body: JSON.stringify({ _method: 'PUT', ...this.editData })
+            });
+            if (response.ok) {
+                window.location.reload();
+            } else {
+                const data = await response.json();
+                this.editError = data.message || 'Gagal menyimpan perubahan';
+            }
+        } catch (e) {
+            this.editError = 'Terjadi kesalahan jaringan';
+        }
+        this.editLoading = false;
+    }
 }">
     <!-- Header & Action Button -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200/80">
@@ -210,28 +232,21 @@
                 <button @click="openEditModal = false" class="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition">&times;</button>
             </div>
 
-            <form method="POST" :action="editUrl" class="space-y-4">
-                @csrf
-                @method('PUT')
+            <form @submit.prevent="submitEdit()" class="space-y-4">
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 mb-1">Nama Lengkap *</label>
-                    <input type="text" name="name" x-model="editData.name" required class="w-full text-xs rounded-xl border-slate-200 border px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-indigo-600">
+                    <input type="text" x-model="editData.name" required class="w-full text-xs rounded-xl border-slate-200 border px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-indigo-600">
                 </div>
 
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 mb-1">Alamat Email *</label>
-                    <input type="email" name="email" x-model="editData.email" required class="w-full text-xs rounded-xl border-slate-200 border px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-indigo-600">
-                </div>
-
-                <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1">Ganti Password (Kosongkan bila tidak diganti)</label>
-                    <input type="password" name="password" minlength="8" placeholder="Password baru..." class="w-full text-xs rounded-xl border-slate-200 border px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-indigo-600">
+                    <input type="email" x-model="editData.email" required class="w-full text-xs rounded-xl border-slate-200 border px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-indigo-600">
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 mb-1">Role (RBAC) *</label>
-                        <select name="role" x-model="editData.role" required class="w-full text-xs rounded-xl border-slate-200 border px-3 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-indigo-600">
+                        <select x-model="editData.role" required class="w-full text-xs rounded-xl border-slate-200 border px-3 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-indigo-600">
                             @foreach($roles as $role)
                                 <option value="{{ $role->value }}">{{ ucfirst($role->value) }}</option>
                             @endforeach
@@ -240,7 +255,7 @@
 
                     <div>
                         <label class="block text-xs font-semibold text-slate-700 mb-1">Lokasi Kantor</label>
-                        <select name="location_id" x-model="editData.location_id" class="w-full text-xs rounded-xl border-slate-200 border px-3 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-indigo-600">
+                        <select x-model="editData.location_id" class="w-full text-xs rounded-xl border-slate-200 border px-3 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-indigo-600">
                             <option value="">Pilih Kantor</option>
                             @foreach($locations as $loc)
                                 <option value="{{ $loc->id }}">{{ $loc->kdloc ? '[' . $loc->kdloc . '] ' : '' }}{{ $loc->name }}</option>
@@ -249,9 +264,14 @@
                     </div>
                 </div>
 
+                <div x-show="editError" x-text="editError" class="text-xs text-rose-600 bg-rose-50 border border-rose-200 px-3 py-2 rounded-xl"></div>
+
                 <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
                     <button type="button" @click="openEditModal = false" class="px-4 py-2 border border-slate-200 text-slate-600 text-xs font-semibold rounded-xl hover:bg-slate-50">Batal</button>
-                    <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl shadow-xs">Perbarui Pengguna</button>
+                    <button type="submit" :disabled="editLoading" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl shadow-xs disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span x-show="!editLoading">Perbarui Pengguna</span>
+                        <span x-show="editLoading">Menyimpan...</span>
+                    </button>
                 </div>
             </form>
         </div>
