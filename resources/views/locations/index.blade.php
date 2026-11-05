@@ -18,7 +18,11 @@
         try {
             const response = await fetch(this.editUrl, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=\"csrf-token\"]').content },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector(&quot;meta[name=&apos;csrf-token&apos;]&quot;).content
+                },
                 body: JSON.stringify({ _method: 'PUT', ...this.editData })
             });
             if (response.ok) {
