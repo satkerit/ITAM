@@ -110,19 +110,26 @@
                 </div>
             @endif
 
-            <!-- Dynamic Specifications -->
+            <!-- Specifications -->
             @if(!empty($asset->specifications))
                 <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-6">
                     <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-2">
-                        <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/></svg>
-                        Spesifikasi Teknis
+                        @if($asset->category->group === 'IT')
+                            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/></svg>
+                            Spesifikasi Teknis
+                        @else
+                            <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                            Spesifikasi Umum
+                        @endif
                     </h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 @if($asset->category->group === 'IT') bg-blue-50/50 border-blue-200/70 @else bg-amber-50/50 border-amber-200/70 @endif rounded-2xl border p-5">
                         @foreach($asset->specifications as $key => $val)
-                            <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between text-xs">
-                                <span class="font-bold uppercase text-slate-500">{{ str_replace('_', ' ', $key) }}</span>
-                                <span class="font-semibold text-slate-900">{{ is_array($val) ? json_encode($val) : $val }}</span>
-                            </div>
+                            @if($val)
+                                <div class="p-3 bg-white rounded-xl border @if($asset->category->group === 'IT') border-blue-100 @else border-amber-100 @endif flex items-center justify-between text-xs">
+                                    <span class="font-bold uppercase @if($asset->category->group === 'IT') text-blue-500 @else text-amber-600 @endif">{{ str_replace('_', ' ', $key) }}</span>
+                                    <span class="font-semibold text-slate-900">{{ is_array($val) ? json_encode($val) : $val }}</span>
+                                </div>
+                            @endif
                         @endforeach
                     </div>
                 </div>

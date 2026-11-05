@@ -28,12 +28,14 @@ class AssetCategoryWebController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255', 'unique:asset_categories,name'],
             'code' => ['required', 'string', 'max:20', 'uppercase'],
+            'group' => ['required', 'in:IT,NON-IT'],
             'description' => ['nullable', 'string'],
         ]);
 
         AssetCategory::create([
             'name' => $validated['name'],
             'code' => strtoupper($validated['code']),
+            'group' => $validated['group'],
             'description' => $validated['description'] ?? null,
             'schema_fields' => [],
         ]);
@@ -46,12 +48,14 @@ class AssetCategoryWebController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255', 'unique:asset_categories,name,'.$category->id],
             'code' => ['required', 'string', 'max:20', 'uppercase'],
+            'group' => ['required', 'in:IT,NON-IT'],
             'description' => ['nullable', 'string'],
         ]);
 
         $category->update([
             'name' => $validated['name'],
             'code' => strtoupper($validated['code']),
+            'group' => $validated['group'],
             'description' => $validated['description'] ?? null,
         ]);
 
@@ -80,9 +84,10 @@ class AssetCategoryWebController extends Controller
     {
         return response()->streamDownload(function (): void {
             $out = fopen('php://output', 'w');
-            fputcsv($out, ['name', 'code', 'description']);
-            fputcsv($out, ['Laptop & Notebook', 'LPT', 'Perangkat komputer jinjing operasional']);
-            fputcsv($out, ['Server & Rack', 'SVR', 'Server rak data center']);
+            fputcsv($out, ['name', 'code', 'group', 'description']);
+            fputcsv($out, ['Laptop & Notebook', 'LPT', 'IT', 'Perangkat komputer jinjing operasional']);
+            fputcsv($out, ['Server & Rack', 'SVR', 'IT', 'Server rak data center']);
+            fputcsv($out, ['Meja Kerja', 'MJX', 'NON-IT', 'Meja kantor standar']);
             fclose($out);
         }, 'template-kategori.csv', ['Content-Type' => 'text/csv']);
     }
@@ -103,11 +108,16 @@ class AssetCategoryWebController extends Controller
         foreach ($rows as $row) {
             $name = trim((string) ($row['name'] ?? ''));
             $code = strtoupper(trim((string) ($row['code'] ?? '')));
+            $group = strtoupper(trim((string) ($row['group'] ?? 'IT')));
 
             if ($name === '' || $code === '') {
                 $skipped++;
 
                 continue;
+            }
+
+            if (!in_array($group, ['IT', 'NON-IT'])) {
+                $group = 'IT';
             }
 
             if (AssetCategory::where('name', $name)->exists()) {
@@ -119,6 +129,7 @@ class AssetCategoryWebController extends Controller
             AssetCategory::create([
                 'name' => $name,
                 'code' => $code,
+                'group' => $group,
                 'description' => trim((string) ($row['description'] ?? '')) ?: null,
                 'schema_fields' => [],
             ]);

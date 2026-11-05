@@ -4,7 +4,18 @@
 @section('header', 'Edit Data Aset')
 
 @section('content')
-    <div class="max-w-4xl bg-white rounded-2xl border border-slate-200/80 shadow-xs p-5 sm:p-6 lg:p-8">
+    <div class="max-w-4xl bg-white rounded-2xl border border-slate-200/80 shadow-xs p-5 sm:p-6 lg:p-8"
+         x-data="{
+            categories: {{ Js::from($categories) }},
+            selectedCategoryId: '{{ old('category_id', $asset->category_id) }}',
+            specifications: {{ Js::from($asset->specifications ?? []) }},
+            get currentCategory() {
+                return this.categories.find(c => c.id == this.selectedCategoryId);
+            },
+            get isITGroup() {
+                return this.currentCategory && this.currentCategory.group === 'IT';
+            }
+         }">
         <form action="{{ route('web.assets.update', $asset) }}" method="POST" enctype="multipart/form-data" class="space-y-6">
             @csrf
             @method('PUT')
@@ -24,7 +35,7 @@
 
                 <div>
                     <label class="block text-xs font-bold uppercase text-slate-700 mb-2">Kategori Aset *</label>
-                    <select name="category_id" required class="w-full text-sm rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 px-3.5 py-2.5 border bg-white">
+                    <select name="category_id" x-model="selectedCategoryId" required class="w-full text-sm rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 px-3.5 py-2.5 border bg-white">
                         @foreach($categories as $category)
                             <option value="{{ $category->id }}" @selected(old('category_id', $asset->category_id) == $category->id)>{{ $category->name }}</option>
                         @endforeach
@@ -80,6 +91,86 @@
                     <label class="block text-xs font-bold uppercase text-slate-700 mb-2">Masa Manfaat (Bulan)</label>
                     <input type="number" name="useful_life_months" min="1" value="{{ old('useful_life_months', $asset->useful_life_months) }}" class="w-full text-sm rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 px-3.5 py-2.5 border">
                     @error('useful_life_months') <span class="text-xs text-rose-600 mt-1 block">{{ $message }}</span> @enderror
+                </div>
+            </div>
+
+            <!-- Spesifikasi Teknis (IT Group) -->
+            <div class="pt-4 border-t border-slate-200" x-show="isITGroup">
+                <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-blue-600"></span>
+                    Spesifikasi Teknis
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-blue-50/50 p-5 rounded-2xl border border-blue-200/70">
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">Processor / CPU</label>
+                        <input type="text" name="specifications[processor]" x-model="specifications.processor" placeholder="Contoh: Intel Core i7-1265U" class="w-full text-sm rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 px-3.5 py-2 border bg-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">RAM / Memory</label>
+                        <input type="text" name="specifications[ram]" x-model="specifications.ram" placeholder="Contoh: 16GB DDR4 3200MHz" class="w-full text-sm rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 px-3.5 py-2 border bg-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">Storage / Penyimpanan</label>
+                        <input type="text" name="specifications[storage]" x-model="specifications.storage" placeholder="Contoh: 512GB SSD NVMe" class="w-full text-sm rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 px-3.5 py-2 border bg-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">Operating System</label>
+                        <input type="text" name="specifications[os]" x-model="specifications.os" placeholder="Contoh: Windows 11 Pro" class="w-full text-sm rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 px-3.5 py-2 border bg-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">IP Address</label>
+                        <input type="text" name="specifications[ip_address]" x-model="specifications.ip_address" placeholder="Contoh: 192.168.1.100" class="w-full text-sm rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 px-3.5 py-2 border bg-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">MAC Address</label>
+                        <input type="text" name="specifications[mac_address]" x-model="specifications.mac_address" placeholder="Contoh: AA:BB:CC:DD:EE:FF" class="w-full text-sm rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 px-3.5 py-2 border bg-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">GPU / VGA</label>
+                        <input type="text" name="specifications[gpu]" x-model="specifications.gpu" placeholder="Contoh: NVIDIA GeForce RTX 3050" class="w-full text-sm rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 px-3.5 py-2 border bg-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">Monitor / Display</label>
+                        <input type="text" name="specifications[monitor]" x-model="specifications.monitor" placeholder="Contoh: 14 inch FHD IPS" class="w-full text-sm rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 px-3.5 py-2 border bg-white">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Spesifikasi Umum (NON-IT Group) -->
+            <div class="pt-4 border-t border-slate-200" x-show="currentCategory && !isITGroup">
+                <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-amber-600"></span>
+                    Spesifikasi Umum
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-amber-50/50 p-5 rounded-2xl border border-amber-200/70">
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">Merek / Brand</label>
+                        <input type="text" name="specifications[brand]" x-model="specifications.brand" placeholder="Contoh: IKEA / Olympus" class="w-full text-sm rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 px-3.5 py-2 border bg-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">Model / Tipe</label>
+                        <input type="text" name="specifications[model]" x-model="specifications.model" placeholder="Contoh: Bekant Desk / FE-230" class="w-full text-sm rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 px-3.5 py-2 border bg-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">Ukuran / Dimensi</label>
+                        <input type="text" name="specifications[dimensions]" x-model="specifications.dimensions" placeholder="Contoh: 120x60x75 cm" class="w-full text-sm rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 px-3.5 py-2 border bg-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">Warna</label>
+                        <input type="text" name="specifications[color]" x-model="specifications.color" placeholder="Contoh: Hitam / Putih" class="w-full text-sm rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 px-3.5 py-2 border bg-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">Bahan / Material</label>
+                        <input type="text" name="specifications[material]" x-model="specifications.material" placeholder="Contoh: Kayu / Plastik / Metal" class="w-full text-sm rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 px-3.5 py-2 border bg-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">Kapasitas</label>
+                        <input type="text" name="specifications[capacity]" x-model="specifications.capacity" placeholder="Contoh: 2 orang / 500 ml" class="w-full text-sm rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 px-3.5 py-2 border bg-white">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-bold uppercase text-slate-600 mb-1.5">Fitur Tambahan</label>
+                        <textarea name="specifications[features]" rows="2" x-model="specifications.features" placeholder="Contoh: Adjustable height, Kabel management, dll" class="w-full text-sm rounded-xl border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 px-3.5 py-2 border bg-white"></textarea>
+                    </div>
                 </div>
             </div>
 

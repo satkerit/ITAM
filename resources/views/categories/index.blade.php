@@ -9,7 +9,7 @@
     openImportModal: false,
     openEditModal: false,
     editUrl: '',
-    editData: { name: '', code: '', description: '' },
+    editData: { name: '', code: '', group: 'IT', description: '' },
     editLoading: false,
     editError: '',
     async submitEdit() {
@@ -73,6 +73,7 @@
                     <tr>
                         <th class="px-6 py-3.5">Nama Kategori</th>
                         <th class="px-6 py-3.5">Kode Prefix</th>
+                        <th class="px-6 py-3.5">Group</th>
                         <th class="px-6 py-3.5">Deskripsi</th>
                         <th class="px-6 py-3.5 text-center">Jumlah Aset Terdaftar</th>
                         <th class="px-6 py-3.5 text-right">Aksi</th>
@@ -87,6 +88,11 @@
                             <td class="px-6 py-4">
                                 <span class="font-mono text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-md">
                                     {{ $item->code }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full {{ $item->group === 'IT' ? 'bg-blue-100 text-blue-700 border border-blue-200' : 'bg-amber-100 text-amber-700 border border-amber-200' }}">
+                                    {{ $item->group }}
                                 </span>
                             </td>
                             <td class="px-6 py-4 text-xs text-slate-500">
@@ -106,6 +112,7 @@
                                             editData = {
                                                 name: '{{ addslashes($item->name) }}',
                                                 code: '{{ addslashes($item->code) }}',
+                                                group: '{{ $item->group }}',
                                                 description: '{{ addslashes($item->description ?? '') }}'
                                             }
                                         "
@@ -127,7 +134,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-6 py-8 text-center text-xs text-slate-400 italic">Belum ada kategori aset.</td>
+                            <td colspan="6" class="px-6 py-8 text-center text-xs text-slate-400 italic">Belum ada kategori aset.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -161,7 +168,15 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-semibold text-slate-700 mb-1">Deskripsi Tambahan</label>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Group *</label>
+                    <select name="group" required class="w-full text-xs rounded-xl border-slate-200 border px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-indigo-600">
+                        <option value="IT">IT</option>
+                        <option value="NON-IT">NON-IT</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1"></label>Deskripsi Tambahan</label>
                     <textarea name="description" rows="2" placeholder="Penjelasan singkat tipe kategori ini..." class="w-full text-xs rounded-xl border-slate-200 border px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-indigo-600"></textarea>
                 </div>
 
@@ -190,6 +205,14 @@
                 <div>
                     <label class="block text-xs font-semibold text-slate-700 mb-1">Kode Prefix *</label>
                     <input type="text" x-model="editData.code" required maxlength="20" class="w-full text-xs font-mono uppercase rounded-xl border-slate-200 border px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-indigo-600">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Group *</label>
+                    <select x-model="editData.group" required class="w-full text-xs rounded-xl border-slate-200 border px-3.5 py-2.5 bg-slate-50/50 focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-indigo-600">
+                        <option value="IT">IT</option>
+                        <option value="NON-IT">NON-IT</option>
+                    </select>
                 </div>
 
                 <div>

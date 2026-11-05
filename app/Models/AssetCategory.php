@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['name', 'code', 'description', 'schema_fields'])]
+#[Fillable(['name', 'code', 'group', 'description', 'schema_fields'])]
 class AssetCategory extends Model
 {
     use HasFactory;
